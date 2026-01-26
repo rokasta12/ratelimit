@@ -36,7 +36,7 @@ All packages share these common options:
 
 | Option         | Type                                 | Default            | Description                     |
 | -------------- | ------------------------------------ | ------------------ | ------------------------------- |
-| `limit`        | `number`                             | `60`               | Maximum requests per window     |
+| `limit`        | `number`                             | `100`              | Maximum requests per window     |
 | `windowMs`     | `number`                             | `60000`            | Window duration in milliseconds |
 | `algorithm`    | `'fixed-window' \| 'sliding-window'` | `'sliding-window'` | Rate limiting algorithm         |
 | `store`        | `RateLimitStore`                     | `MemoryStore`      | Storage backend                 |

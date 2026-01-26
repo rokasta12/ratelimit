@@ -36,7 +36,7 @@ export {
 export type RateLimitOptions = {
   /**
    * Maximum requests allowed in the time window.
-   * @default 60
+   * @default 100
    */
   limit?: number | ((req: Request) => number | Promise<number>)
 
@@ -208,7 +208,7 @@ export function getClientIP(req: Request): string {
  */
 export function rateLimiter(options?: RateLimitOptions): RequestHandler {
   const opts = {
-    limit: 60 as number | ((req: Request) => number | Promise<number>),
+    limit: 100 as number | ((req: Request) => number | Promise<number>),
     windowMs: 60_000,
     algorithm: 'sliding-window' as Algorithm,
     store: undefined as RateLimitStore | undefined,

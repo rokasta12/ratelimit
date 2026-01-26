@@ -29,6 +29,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "*.d.ts", "coverage"]
+    "ignore": ["node_modules", "dist", "*.d.ts", "coverage", "docs/.astro", "docs/dist"]
   }
 }

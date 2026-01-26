@@ -14,7 +14,7 @@ import {
   checkRateLimit,
 } from '@jf/ratelimit'
 import type { EventHandler, H3Event } from 'h3'
-import { getHeader, getRequestIP, send, setHeader, setResponseStatus } from 'h3'
+import { eventHandler, getHeader, getRequestIP, send, setHeader, setResponseStatus } from 'h3'
 
 // Re-export core types
 export {
@@ -39,7 +39,7 @@ export {
 export type RateLimitOptions = {
   /**
    * Maximum requests allowed in the time window.
-   * @default 60
+   * @default 100
    */
   limit?: number | ((event: H3Event) => number | Promise<number>)
 
@@ -180,7 +180,7 @@ export function getClientIP(event: H3Event): string {
  */
 export function rateLimiter(options?: RateLimitOptions): EventHandler {
   const opts = {
-    limit: 60 as number | ((event: H3Event) => number | Promise<number>),
+    limit: 100 as number | ((event: H3Event) => number | Promise<number>),
     windowMs: 60_000,
     algorithm: 'sliding-window' as Algorithm,
     store: undefined as RateLimitStore | undefined,
@@ -221,7 +221,7 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     return opts.onStoreError === 'allow'
   }
 
-  return async function rateLimiterHandler(event: H3Event) {
+  return eventHandler(async function rateLimiterHandler(event: H3Event) {
     // Initialize store
     if (!initPromise && store.init) {
       const result = store.init(opts.windowMs)
@@ -311,7 +311,7 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     }
 
     // Continue to next handler (return undefined)
-  }
+  })
 }
 
 /**

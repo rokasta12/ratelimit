@@ -97,7 +97,7 @@ export type RateLimitStoreAccess = {
 export type RateLimitOptions<E extends Env = Env> = {
   /**
    * Maximum requests allowed in the time window.
-   * @default 60
+   * @default 100
    */
   limit?: number | ((c: Context<E>) => number | Promise<number>)
 
@@ -492,7 +492,7 @@ export const rateLimiter = <E extends Env = Env>(
 ): MiddlewareHandler<E> => {
   // Merge with defaults
   const opts = {
-    limit: 60 as number | ((c: Context<E>) => number | Promise<number>),
+    limit: 100 as number | ((c: Context<E>) => number | Promise<number>),
     windowMs: 60_000,
     algorithm: 'sliding-window' as Algorithm,
     store: undefined as RateLimitStore | undefined,
