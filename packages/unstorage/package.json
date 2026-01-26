@@ -9,7 +9,18 @@
     "url": "https://github.com/rokasta12/ratelimit.git",
     "directory": "packages/unstorage"
   },
-  "keywords": ["rate-limit", "unstorage", "redis", "cloudflare-kv", "vercel-kv", "upstash"],
+  "homepage": "https://rokasta12.github.io/ratelimit/",
+  "bugs": {
+    "url": "https://github.com/rokasta12/ratelimit/issues"
+  },
+  "keywords": [
+    "rate-limit",
+    "unstorage",
+    "redis",
+    "cloudflare-kv",
+    "vercel-kv",
+    "upstash"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,7 +37,10 @@
       }
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

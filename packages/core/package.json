@@ -9,6 +9,10 @@
     "url": "https://github.com/rokasta12/ratelimit.git",
     "directory": "packages/core"
   },
+  "homepage": "https://rokasta12.github.io/ratelimit/",
+  "bugs": {
+    "url": "https://github.com/rokasta12/ratelimit/issues"
+  },
   "keywords": [
     "rate-limit",
     "rate-limiter",
@@ -33,7 +37,10 @@
       }
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

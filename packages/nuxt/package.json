@@ -9,7 +9,17 @@
     "url": "https://github.com/rokasta12/ratelimit.git",
     "directory": "packages/nuxt"
   },
-  "keywords": ["nuxt", "nuxt-module", "rate-limit", "rate-limiter", "middleware"],
+  "homepage": "https://rokasta12.github.io/ratelimit/",
+  "bugs": {
+    "url": "https://github.com/rokasta12/ratelimit/issues"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "rate-limit",
+    "rate-limiter",
+    "middleware"
+  ],
   "type": "module",
   "main": "./dist/module.cjs",
   "module": "./dist/module.js",
@@ -26,7 +36,10 @@
       }
     }
   },
-  "files": ["dist", "runtime"],
+  "files": [
+    "dist",
+    "runtime"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

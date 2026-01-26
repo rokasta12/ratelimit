@@ -2,8 +2,12 @@
 
 Multi-framework rate limiting for JavaScript/TypeScript.
 
-[![Documentation](https://img.shields.io/badge/docs-online-blue)](https://rokasta12.github.io/ratelimit/)
+[![CI](https://github.com/rokasta12/ratelimit/actions/workflows/ci.yml/badge.svg)](https://github.com/rokasta12/ratelimit/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@jfungus/ratelimit)](https://www.npmjs.com/package/@jfungus/ratelimit)
+[![npm downloads](https://img.shields.io/npm/dm/@jfungus/ratelimit)](https://www.npmjs.com/package/@jfungus/ratelimit)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://rokasta12.github.io/ratelimit/)
 
 ## Features
 
@@ -96,8 +100,8 @@ export default defineNuxtConfig({
 
 ## Packages
 
-| Package                   | Description                                  | npm                                                                                                                   |
-| ------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Package                        | Description                                  | npm                                                                                                                             |
+| ------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `@jfungus/ratelimit`           | Core library with algorithms and MemoryStore | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit)](https://www.npmjs.com/package/@jfungus/ratelimit)                     |
 | `@jfungus/ratelimit-hono`      | Hono middleware                              | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-hono)](https://www.npmjs.com/package/@jfungus/ratelimit-hono)           |
 | `@jfungus/ratelimit-express`   | Express middleware                           | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-express)](https://www.npmjs.com/package/@jfungus/ratelimit-express)     |

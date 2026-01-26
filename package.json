@@ -9,6 +9,10 @@
     "type": "git",
     "url": "https://github.com/rokasta12/ratelimit.git"
   },
+  "homepage": "https://rokasta12.github.io/ratelimit/",
+  "bugs": {
+    "url": "https://github.com/rokasta12/ratelimit/issues"
+  },
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
