@@ -1,0 +1,63 @@
+{
+  "name": "@jf/ratelimit-unstorage",
+  "version": "0.0.1",
+  "description": "unstorage adapter for @jf/ratelimit - supports Redis, Cloudflare KV, Vercel KV, and more",
+  "author": "rokasta12",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rokasta12/ratelimit.git",
+    "directory": "packages/unstorage"
+  },
+  "keywords": [
+    "rate-limit",
+    "unstorage",
+    "redis",
+    "cloudflare-kv",
+    "vercel-kv",
+    "upstash"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@jf/ratelimit": "workspace:*"
+  },
+  "peerDependencies": {
+    "unstorage": ">=1.10.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "unstorage": "^1.14.4",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

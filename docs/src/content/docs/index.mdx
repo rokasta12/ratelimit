@@ -1,0 +1,65 @@
+---
+title: "@jf/ratelimit"
+description: Multi-framework rate limiting for JavaScript/TypeScript
+template: splash
+hero:
+  tagline: Flexible, high-performance rate limiting for Hono, Express, H3, Nuxt, and more.
+  actions:
+    - text: Get Started
+      link: /ratelimit/guides/quickstart/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/rokasta12/ratelimit
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Features
+
+<CardGrid stagger>
+  <Card title="Multi-Framework" icon="puzzle">
+    Works with Hono, Express, H3/Nitro, Nuxt, and any JavaScript runtime.
+  </Card>
+  <Card title="Smart Algorithms" icon="setting">
+    Fixed window and sliding window algorithms with Cloudflare-style weighted
+    calculations.
+  </Card>
+  <Card title="Flexible Storage" icon="document">
+    In-memory store included. Use unstorage adapter for Redis, Cloudflare KV,
+    and more.
+  </Card>
+  <Card title="TypeScript First" icon="seti:typescript">
+    Full TypeScript support with comprehensive type definitions.
+  </Card>
+</CardGrid>
+
+## Packages
+
+| Package                   | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `@jf/ratelimit`           | Core library with algorithms and MemoryStore |
+| `@jf/ratelimit-hono`      | Hono middleware                              |
+| `@jf/ratelimit-express`   | Express middleware                           |
+| `@jf/ratelimit-h3`        | H3/Nitro middleware                          |
+| `@jf/ratelimit-nuxt`      | Nuxt module                                  |
+| `@jf/ratelimit-unstorage` | unstorage adapter for distributed stores     |
+
+## Quick Example
+
+```ts
+import { Hono } from "hono";
+import { rateLimiter } from "@jf/ratelimit-hono";
+
+const app = new Hono();
+
+app.use(
+  rateLimiter({
+    limit: 100,
+    windowMs: 60_000, // 1 minute
+  }),
+);
+
+app.get("/", (c) => c.text("Hello!"));
+```

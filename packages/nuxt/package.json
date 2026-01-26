@@ -1,0 +1,60 @@
+{
+  "name": "@jf/ratelimit-nuxt",
+  "version": "0.0.1",
+  "description": "Nuxt module for @jf/ratelimit - rate limiting with Nuxt's useStorage",
+  "author": "rokasta12",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rokasta12/ratelimit.git",
+    "directory": "packages/nuxt"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "rate-limit",
+    "rate-limiter",
+    "middleware"
+  ],
+  "type": "module",
+  "main": "./dist/module.cjs",
+  "module": "./dist/module.js",
+  "types": "./dist/module.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/module.d.ts",
+        "default": "./dist/module.js"
+      },
+      "require": {
+        "types": "./dist/module.d.cts",
+        "default": "./dist/module.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "runtime"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@jf/ratelimit": "workspace:*",
+    "@nuxt/kit": "^3.17.4"
+  },
+  "devDependencies": {
+    "@nuxt/schema": "^3.17.4",
+    "nuxt": "^3.17.4",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
