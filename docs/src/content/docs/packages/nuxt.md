@@ -1,7 +1,9 @@
 ---
-title: Nuxt
-description: Rate limiting for Nuxt applications
+title: "@jf/ratelimit-nuxt"
+description: "Rate limiting module for Nuxt 3. Zero-config API protection with sliding window algorithms and distributed storage support."
 ---
+
+Rate limiting module for [Nuxt 3](https://nuxt.com/) - the intuitive Vue.js meta-framework.
 
 ## Installation
 
@@ -68,6 +70,25 @@ export default defineNuxtConfig({
 });
 ```
 
+## With Cloudflare KV
+
+```ts
+export default defineNuxtConfig({
+  modules: ["@jf/ratelimit-nuxt"],
+  rateLimit: {
+    storage: "cloudflare",
+  },
+  nitro: {
+    storage: {
+      cloudflare: {
+        driver: "cloudflare-kv-binding",
+        binding: "RATE_LIMIT_KV",
+      },
+    },
+  },
+});
+```
+
 ## Access Rate Limit Info
 
 ```ts
@@ -90,3 +111,9 @@ export default defineNuxtConfig({
   },
 });
 ```
+
+## Related
+
+- [Nuxt Documentation](https://nuxt.com/)
+- [@jf/ratelimit-h3](/ratelimit/packages/h3/) - For custom H3 middleware
+- [Stores](/ratelimit/concepts/stores/) - Storage options

@@ -1,11 +1,18 @@
 ---
 title: Introduction
-description: What is @jf/ratelimit and why use it?
+description: What is @jf/ratelimit? A multi-framework rate limiting library for Node.js and Edge runtimes.
 ---
 
 ## What is @jf/ratelimit?
 
-A multi-framework rate limiting library for JavaScript and TypeScript. Unified API across different web frameworks with pluggable storage backends.
+A rate limiting library for JavaScript and TypeScript that works across frameworks. One consistent API for Hono, Express, H3, Nuxt, and more.
+
+## Why Use It?
+
+- **Framework-agnostic** - Same configuration everywhere
+- **Edge-ready** - Works on Cloudflare Workers, Vercel Edge, Deno
+- **Production-ready** - Redis, KV storage for distributed deployments
+- **Modern algorithms** - Cloudflare-style sliding window prevents bursts
 
 ## Architecture
 
@@ -23,20 +30,25 @@ A multi-framework rate limiting library for JavaScript and TypeScript. Unified A
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Supported Frameworks
+## Packages
 
-- **Hono** - Lightweight web framework for the Edge
-- **Express** - The most popular Node.js framework
-- **H3/Nitro** - Universal JavaScript server framework
-- **Nuxt** - Vue.js meta-framework (via module)
+| Package                                                   | Description                   |
+| --------------------------------------------------------- | ----------------------------- |
+| [@jf/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore |
+| [@jf/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               |
+| [@jf/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            |
+| [@jf/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           |
+| [@jf/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   |
+| [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Distributed storage adapter   |
 
-## Supported Algorithms
+## Algorithms
 
-- **Fixed Window** - Simple counter that resets at fixed intervals
-- **Sliding Window** - Weighted calculation for smoother limiting (default)
+- **Sliding Window** (default) - Smooth, no burst vulnerability
+- **Fixed Window** - Simple, predictable
+
+Learn more in [Algorithms](/ratelimit/concepts/algorithms/).
 
 ## Next Steps
 
-- [Quick Start](/ratelimit/guides/quickstart/) - Get up and running in minutes
-- [Algorithms](/ratelimit/concepts/algorithms/) - Learn about the rate limiting algorithms
+- [Quick Start](/ratelimit/guides/quickstart/) - Get up and running
 - [Stores](/ratelimit/concepts/stores/) - Configure storage backends

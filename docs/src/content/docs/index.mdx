@@ -1,9 +1,9 @@
 ---
-title: "@jf/ratelimit"
-description: Multi-framework rate limiting for JavaScript/TypeScript
+title: "Rate Limiting for JavaScript - Hono, Express, Nuxt, H3"
+description: "Open-source rate limiting library for Node.js and Edge runtimes. Protect your APIs with sliding window algorithms, Redis support, and TypeScript-first design."
 template: splash
 hero:
-  tagline: Flexible, high-performance rate limiting for Hono, Express, H3, Nuxt, and more.
+  tagline: Protect your APIs from abuse. Framework-agnostic rate limiting for Hono, Express, H3, Nuxt, and Edge runtimes.
   actions:
     - text: Get Started
       link: /ratelimit/guides/quickstart/
@@ -16,35 +16,37 @@ hero:
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
-## Features
+## Why @jf/ratelimit?
 
 <CardGrid stagger>
-  <Card title="Multi-Framework" icon="puzzle">
-    Works with Hono, Express, H3/Nitro, Nuxt, and any JavaScript runtime.
+  <Card title="Any Framework" icon="puzzle">
+    First-class support for Hono, Express, H3/Nitro, and Nuxt. Same API
+    everywhere.
+  </Card>
+  <Card title="Edge Ready" icon="rocket">
+    Works on Cloudflare Workers, Vercel Edge, Deno Deploy, and traditional
+    Node.js servers.
   </Card>
   <Card title="Smart Algorithms" icon="setting">
-    Fixed window and sliding window algorithms with Cloudflare-style weighted
-    calculations.
+    Cloudflare-style sliding window prevents burst attacks. Fixed window also
+    available.
   </Card>
-  <Card title="Flexible Storage" icon="document">
-    In-memory store included. Use unstorage adapter for Redis, Cloudflare KV,
-    and more.
-  </Card>
-  <Card title="TypeScript First" icon="seti:typescript">
-    Full TypeScript support with comprehensive type definitions.
+  <Card title="Distributed Storage" icon="document">
+    In-memory for development. Redis, Cloudflare KV, or Vercel KV for
+    production.
   </Card>
 </CardGrid>
 
 ## Packages
 
-| Package                   | Description                                  |
-| ------------------------- | -------------------------------------------- |
-| `@jf/ratelimit`           | Core library with algorithms and MemoryStore |
-| `@jf/ratelimit-hono`      | Hono middleware                              |
-| `@jf/ratelimit-express`   | Express middleware                           |
-| `@jf/ratelimit-h3`        | H3/Nitro middleware                          |
-| `@jf/ratelimit-nuxt`      | Nuxt module                                  |
-| `@jf/ratelimit-unstorage` | unstorage adapter for distributed stores     |
+| Package                                                   | Description                   | Use Case                          |
+| --------------------------------------------------------- | ----------------------------- | --------------------------------- |
+| [@jf/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore | Direct usage, custom integrations |
+| [@jf/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               | Hono apps, Cloudflare Workers     |
+| [@jf/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            | Express.js applications           |
+| [@jf/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           | Nitro servers, standalone H3      |
+| [@jf/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   | Nuxt 3 applications               |
+| [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Storage adapter               | Redis, KV, distributed setups     |
 
 ## Quick Example
 
@@ -54,12 +56,30 @@ import { rateLimiter } from "@jf/ratelimit-hono";
 
 const app = new Hono();
 
+// 100 requests per minute per IP
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000, // 1 minute
+    windowMs: 60_000,
   }),
 );
 
-app.get("/", (c) => c.text("Hello!"));
+app.get("/api/data", (c) => c.json({ success: true }));
+```
+
+## Production Ready
+
+```ts
+// With Redis for distributed deployments
+import { createStorage } from "unstorage";
+import redisDriver from "unstorage/drivers/redis";
+import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+
+const store = createUnstorageStore({
+  storage: createStorage({
+    driver: redisDriver({ url: process.env.REDIS_URL }),
+  }),
+});
+
+app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
 ```
