@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit-hono",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Hono middleware for @jfungus/ratelimit",
   "author": "rokasta12",
   "license": "MIT",
@@ -13,7 +13,13 @@
   "bugs": {
     "url": "https://github.com/rokasta12/ratelimit/issues"
   },
-  "keywords": ["hono", "rate-limit", "rate-limiter", "middleware", "cloudflare-workers"],
+  "keywords": [
+    "hono",
+    "rate-limit",
+    "rate-limiter",
+    "middleware",
+    "cloudflare-workers"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -30,7 +36,11 @@
       }
     }
   },
-  "files": ["dist", "src", "README.md"],
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit-nuxt",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Nuxt module for @jfungus/ratelimit - rate limiting with Nuxt's useStorage",
   "author": "rokasta12",
   "license": "MIT",
@@ -13,7 +13,13 @@
   "bugs": {
     "url": "https://github.com/rokasta12/ratelimit/issues"
   },
-  "keywords": ["nuxt", "nuxt-module", "rate-limit", "rate-limiter", "middleware"],
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "rate-limit",
+    "rate-limiter",
+    "middleware"
+  ],
   "type": "module",
   "main": "./dist/module.cjs",
   "module": "./dist/module.js",
@@ -30,7 +36,11 @@
       }
     }
   },
-  "files": ["dist", "runtime", "README.md"],
+  "files": [
+    "dist",
+    "runtime",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
