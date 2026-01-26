@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Docs build
+docs/dist/
+
 # Coverage
 coverage/
 

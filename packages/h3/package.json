@@ -9,13 +9,7 @@
     "url": "https://github.com/rokasta12/ratelimit.git",
     "directory": "packages/h3"
   },
-  "keywords": [
-    "h3",
-    "nitro",
-    "nuxt",
-    "rate-limit",
-    "middleware"
-  ],
+  "keywords": ["h3", "nitro", "nuxt", "rate-limit", "middleware"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -32,10 +26,7 @@
       }
     }
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "files": ["dist", "src"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

@@ -4,14 +4,14 @@
  * @module
  */
 
-import type { Request, Response, NextFunction, RequestHandler } from "express";
 import {
   type Algorithm,
   MemoryStore,
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
-} from "@jf/ratelimit";
+} from '@jf/ratelimit'
+import type { NextFunction, Request, RequestHandler, Response } from 'express'
 
 // Re-export core types
 export {
@@ -24,7 +24,7 @@ export {
   type StoreResult,
   checkRateLimit,
   createRateLimiter,
-} from "@jf/ratelimit";
+} from '@jf/ratelimit'
 
 // ============================================================================
 // Types
@@ -38,94 +38,83 @@ export type RateLimitOptions = {
    * Maximum requests allowed in the time window.
    * @default 60
    */
-  limit?: number | ((req: Request) => number | Promise<number>);
+  limit?: number | ((req: Request) => number | Promise<number>)
 
   /**
    * Time window in milliseconds.
    * @default 60000 (1 minute)
    */
-  windowMs?: number;
+  windowMs?: number
 
   /**
    * Rate limiting algorithm.
    * @default 'sliding-window'
    */
-  algorithm?: Algorithm;
+  algorithm?: Algorithm
 
   /**
    * Storage backend for rate limit state.
    * @default MemoryStore
    */
-  store?: RateLimitStore;
+  store?: RateLimitStore
 
   /**
    * Generate unique key for each client.
    * @default IP address
    */
-  keyGenerator?: (req: Request) => string | Promise<string>;
+  keyGenerator?: (req: Request) => string | Promise<string>
 
   /**
    * Handler called when rate limit is exceeded.
    */
-  handler?: (
-    req: Request,
-    res: Response,
-    info: RateLimitInfo,
-  ) => void | Promise<void>;
+  handler?: (req: Request, res: Response, info: RateLimitInfo) => void | Promise<void>
 
   /**
    * Skip rate limiting for certain requests.
    */
-  skip?: (req: Request) => boolean | Promise<boolean>;
+  skip?: (req: Request) => boolean | Promise<boolean>
 
   /**
    * Don't count successful (2xx) requests against limit.
    * @default false
    */
-  skipSuccessfulRequests?: boolean;
+  skipSuccessfulRequests?: boolean
 
   /**
    * Don't count failed (4xx, 5xx) requests against limit.
    * @default false
    */
-  skipFailedRequests?: boolean;
+  skipFailedRequests?: boolean
 
   /**
    * Callback when a request is rate limited.
    */
-  onRateLimited?: (
-    req: Request,
-    res: Response,
-    info: RateLimitInfo,
-  ) => void | Promise<void>;
+  onRateLimited?: (req: Request, res: Response, info: RateLimitInfo) => void | Promise<void>
 
   /**
    * Behavior when store operations fail.
    * @default 'allow'
    */
-  onStoreError?:
-    | "allow"
-    | "deny"
-    | ((error: Error, req: Request) => boolean | Promise<boolean>);
+  onStoreError?: 'allow' | 'deny' | ((error: Error, req: Request) => boolean | Promise<boolean>)
 
   /**
    * Dry-run mode: track rate limits but don't block requests.
    * @default false
    */
-  dryRun?: boolean;
+  dryRun?: boolean
 
   /**
    * Use legacy headers (X-RateLimit-*).
    * @default true
    */
-  legacyHeaders?: boolean;
+  legacyHeaders?: boolean
 
   /**
    * Use standard headers (RateLimit-*).
    * @default false
    */
-  standardHeaders?: boolean;
-};
+  standardHeaders?: boolean
+}
 
 // ============================================================================
 // Extend Express types
@@ -134,7 +123,7 @@ export type RateLimitOptions = {
 declare global {
   namespace Express {
     interface Request {
-      rateLimit?: RateLimitInfo;
+      rateLimit?: RateLimitInfo
     }
   }
 }
@@ -143,15 +132,15 @@ declare global {
 // Singleton Default Store
 // ============================================================================
 
-let defaultStore: MemoryStore | undefined;
+let defaultStore: MemoryStore | undefined
 
 /**
  * Shutdown the default memory store.
  */
 export function shutdownDefaultStore(): void {
   if (defaultStore) {
-    defaultStore.shutdown();
-    defaultStore = undefined;
+    defaultStore.shutdown()
+    defaultStore = undefined
   }
 }
 
@@ -164,28 +153,28 @@ export function shutdownDefaultStore(): void {
  */
 export function getClientIP(req: Request): string {
   // Trust proxy setting
-  const ip = req.ip;
+  const ip = req.ip
   if (ip) {
-    return ip;
+    return ip
   }
 
   // Check common headers
-  const cfIP = req.get("cf-connecting-ip");
+  const cfIP = req.get('cf-connecting-ip')
   if (cfIP) {
-    return cfIP;
+    return cfIP
   }
 
-  const xRealIP = req.get("x-real-ip");
+  const xRealIP = req.get('x-real-ip')
   if (xRealIP) {
-    return xRealIP;
+    return xRealIP
   }
 
-  const xff = req.get("x-forwarded-for");
+  const xff = req.get('x-forwarded-for')
   if (xff) {
-    return xff.split(",")[0].trim();
+    return xff.split(',')[0].trim()
   }
 
-  return req.socket?.remoteAddress || "unknown";
+  return req.socket?.remoteAddress || 'unknown'
 }
 
 // ============================================================================
@@ -221,62 +210,47 @@ export function rateLimiter(options?: RateLimitOptions): RequestHandler {
   const opts = {
     limit: 60 as number | ((req: Request) => number | Promise<number>),
     windowMs: 60_000,
-    algorithm: "sliding-window" as Algorithm,
+    algorithm: 'sliding-window' as Algorithm,
     store: undefined as RateLimitStore | undefined,
     keyGenerator: getClientIP,
     handler: undefined as
-      | ((
-          req: Request,
-          res: Response,
-          info: RateLimitInfo,
-        ) => void | Promise<void>)
+      | ((req: Request, res: Response, info: RateLimitInfo) => void | Promise<void>)
       | undefined,
-    skip: undefined as
-      | ((req: Request) => boolean | Promise<boolean>)
-      | undefined,
+    skip: undefined as ((req: Request) => boolean | Promise<boolean>) | undefined,
     skipSuccessfulRequests: false,
     skipFailedRequests: false,
     onRateLimited: undefined as
-      | ((
-          req: Request,
-          res: Response,
-          info: RateLimitInfo,
-        ) => void | Promise<void>)
+      | ((req: Request, res: Response, info: RateLimitInfo) => void | Promise<void>)
       | undefined,
-    onStoreError: "allow" as
-      | "allow"
-      | "deny"
+    onStoreError: 'allow' as
+      | 'allow'
+      | 'deny'
       | ((error: Error, req: Request) => boolean | Promise<boolean>),
     dryRun: false,
     legacyHeaders: true,
     standardHeaders: false,
     ...options,
-  };
+  }
 
   // Validate
-  if (typeof opts.limit === "number" && opts.limit <= 0) {
-    throw new Error("[@jf/ratelimit-express] limit must be a positive number");
+  if (typeof opts.limit === 'number' && opts.limit <= 0) {
+    throw new Error('[@jf/ratelimit-express] limit must be a positive number')
   }
   if (opts.windowMs <= 0) {
-    throw new Error(
-      "[@jf/ratelimit-express] windowMs must be a positive number",
-    );
+    throw new Error('[@jf/ratelimit-express] windowMs must be a positive number')
   }
 
   // Use default store if none provided
-  const store = opts.store ?? (defaultStore ??= new MemoryStore());
+  const store = opts.store ?? (defaultStore ??= new MemoryStore())
 
   // Track initialization
-  let initPromise: Promise<void> | null = null;
+  let initPromise: Promise<void> | null = null
 
-  async function handleStoreError(
-    error: Error,
-    req: Request,
-  ): Promise<boolean> {
-    if (typeof opts.onStoreError === "function") {
-      return opts.onStoreError(error, req);
+  async function handleStoreError(error: Error, req: Request): Promise<boolean> {
+    if (typeof opts.onStoreError === 'function') {
+      return opts.onStoreError(error, req)
     }
-    return opts.onStoreError === "allow";
+    return opts.onStoreError === 'allow'
   }
 
   return async function rateLimiterMiddleware(
@@ -286,43 +260,42 @@ export function rateLimiter(options?: RateLimitOptions): RequestHandler {
   ): Promise<void> {
     // Initialize store
     if (!initPromise && store.init) {
-      const result = store.init(opts.windowMs);
-      initPromise = result instanceof Promise ? result : Promise.resolve();
+      const result = store.init(opts.windowMs)
+      initPromise = result instanceof Promise ? result : Promise.resolve()
     }
     if (initPromise) {
       try {
-        await initPromise;
+        await initPromise
       } catch (error) {
         const shouldAllow = await handleStoreError(
           error instanceof Error ? error : new Error(String(error)),
           req,
-        );
+        )
         if (shouldAllow) {
-          return next();
+          return next()
         }
-        res.status(500).send("Rate limiter initialization failed");
-        return;
+        res.status(500).send('Rate limiter initialization failed')
+        return
       }
     }
 
     // Check skip
     if (opts.skip) {
-      const shouldSkip = await opts.skip(req);
+      const shouldSkip = await opts.skip(req)
       if (shouldSkip) {
-        return next();
+        return next()
       }
     }
 
     // Generate key
-    const key = await opts.keyGenerator(req);
+    const key = await opts.keyGenerator(req)
 
     // Get limit
-    const limit =
-      typeof opts.limit === "function" ? await opts.limit(req) : opts.limit;
+    const limit = typeof opts.limit === 'function' ? await opts.limit(req) : opts.limit
 
     // Check rate limit
-    let allowed: boolean;
-    let info: RateLimitInfo;
+    let allowed: boolean
+    let info: RateLimitInfo
 
     try {
       const result = await checkRateLimit({
@@ -331,85 +304,78 @@ export function rateLimiter(options?: RateLimitOptions): RequestHandler {
         limit,
         windowMs: opts.windowMs,
         algorithm: opts.algorithm,
-      });
-      allowed = result.allowed;
-      info = result.info;
+      })
+      allowed = result.allowed
+      info = result.info
     } catch (error) {
       const shouldAllow = await handleStoreError(
         error instanceof Error ? error : new Error(String(error)),
         req,
-      );
+      )
       if (shouldAllow) {
-        return next();
+        return next()
       }
-      res.status(500).send("Rate limiter error");
-      return;
+      res.status(500).send('Rate limiter error')
+      return
     }
 
     // Store info in request
-    req.rateLimit = info;
+    req.rateLimit = info
 
     // Set headers
     if (opts.legacyHeaders) {
-      res.setHeader("X-RateLimit-Limit", String(info.limit));
-      res.setHeader("X-RateLimit-Remaining", String(info.remaining));
-      res.setHeader("X-RateLimit-Reset", String(Math.ceil(info.reset / 1000)));
+      res.setHeader('X-RateLimit-Limit', String(info.limit))
+      res.setHeader('X-RateLimit-Remaining', String(info.remaining))
+      res.setHeader('X-RateLimit-Reset', String(Math.ceil(info.reset / 1000)))
     }
 
     if (opts.standardHeaders) {
-      const resetSeconds = Math.max(
-        0,
-        Math.ceil((info.reset - Date.now()) / 1000),
-      );
-      res.setHeader("RateLimit-Limit", String(info.limit));
-      res.setHeader("RateLimit-Remaining", String(info.remaining));
-      res.setHeader("RateLimit-Reset", String(resetSeconds));
+      const resetSeconds = Math.max(0, Math.ceil((info.reset - Date.now()) / 1000))
+      res.setHeader('RateLimit-Limit', String(info.limit))
+      res.setHeader('RateLimit-Remaining', String(info.remaining))
+      res.setHeader('RateLimit-Reset', String(resetSeconds))
     }
 
     // Handle rate limited
     if (!allowed) {
       if (opts.onRateLimited) {
-        await opts.onRateLimited(req, res, info);
+        await opts.onRateLimited(req, res, info)
       }
 
       if (!opts.dryRun) {
-        res.setHeader(
-          "Retry-After",
-          String(Math.ceil((info.reset - Date.now()) / 1000)),
-        );
+        res.setHeader('Retry-After', String(Math.ceil((info.reset - Date.now()) / 1000)))
 
         if (opts.handler) {
-          await opts.handler(req, res, info);
-          return;
+          await opts.handler(req, res, info)
+          return
         }
 
-        res.status(429).send("Rate limit exceeded");
-        return;
+        res.status(429).send('Rate limit exceeded')
+        return
       }
     }
 
     // Handle skip after response
     if (opts.skipSuccessfulRequests || opts.skipFailedRequests) {
-      const windowStart =
-        Math.floor(Date.now() / opts.windowMs) * opts.windowMs;
-      const windowKey = `${key}:${windowStart}`;
+      const windowStart = Math.floor(Date.now() / opts.windowMs) * opts.windowMs
+      const windowKey = `${key}:${windowStart}`
 
-      res.on("finish", async () => {
-        const status = res.statusCode;
+      res.on('finish', async () => {
+        const status = res.statusCode
         const shouldDecrement =
           (opts.skipSuccessfulRequests && status >= 200 && status < 300) ||
-          (opts.skipFailedRequests && status >= 400);
+          (opts.skipFailedRequests && status >= 400)
 
         if (shouldDecrement && store.decrement) {
           try {
-            await store.decrement(windowKey);
+            await store.decrement(windowKey)
           } catch {
             // Ignore
           }
         }
-      });
+      })
     }
 
-    next();
-  };
+    next()
+  }
 }

@@ -9,12 +9,7 @@
     "url": "https://github.com/rokasta12/ratelimit.git",
     "directory": "packages/express"
   },
-  "keywords": [
-    "express",
-    "rate-limit",
-    "rate-limiter",
-    "middleware"
-  ],
+  "keywords": ["express", "rate-limit", "rate-limiter", "middleware"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -31,10 +26,7 @@
       }
     }
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "files": ["dist", "src"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

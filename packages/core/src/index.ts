@@ -13,27 +13,27 @@
  */
 export type RateLimitInfo = {
   /** Maximum requests allowed in window */
-  limit: number;
+  limit: number
   /** Remaining requests in current window */
-  remaining: number;
+  remaining: number
   /** Unix timestamp (ms) when window resets */
-  reset: number;
-};
+  reset: number
+}
 
 /**
  * Result from store increment operation
  */
 export type StoreResult = {
   /** Current request count in window */
-  count: number;
+  count: number
   /** When the window resets (Unix timestamp ms) */
-  reset: number;
-};
+  reset: number
+}
 
 /**
  * Rate limit algorithm
  */
-export type Algorithm = "fixed-window" | "sliding-window";
+export type Algorithm = 'fixed-window' | 'sliding-window'
 
 /**
  * Store interface for rate limit state.
@@ -46,32 +46,32 @@ export type RateLimitStore = {
    * Initialize store. Called once before first use.
    * @param windowMs - Window duration in milliseconds
    */
-  init?: (windowMs: number) => void | Promise<void>;
+  init?: (windowMs: number) => void | Promise<void>
 
   /**
    * Increment counter for key and return current state.
    * This is the main operation - it should atomically increment and return.
    * @param key - Unique identifier for the rate limit bucket
    */
-  increment: (key: string) => StoreResult | Promise<StoreResult>;
+  increment: (key: string) => StoreResult | Promise<StoreResult>
 
   /**
    * Decrement counter for key.
    * Used for skip options (skipSuccessfulRequests, skipFailedRequests).
    * @param key - Unique identifier for the rate limit bucket
    */
-  decrement?: (key: string) => void | Promise<void>;
+  decrement?: (key: string) => void | Promise<void>
 
   /**
    * Reset a specific key.
    * @param key - Unique identifier to reset
    */
-  resetKey: (key: string) => void | Promise<void>;
+  resetKey: (key: string) => void | Promise<void>
 
   /**
    * Reset all keys.
    */
-  resetAll?: () => void | Promise<void>;
+  resetAll?: () => void | Promise<void>
 
   /**
    * Get current state for key.
@@ -79,51 +79,49 @@ export type RateLimitStore = {
    * Required for sliding window algorithm.
    * @param key - Unique identifier for the rate limit bucket
    */
-  get?: (
-    key: string,
-  ) => Promise<StoreResult | undefined> | StoreResult | undefined;
+  get?: (key: string) => Promise<StoreResult | undefined> | StoreResult | undefined
 
   /**
    * Graceful shutdown.
    * Clean up timers, connections, etc.
    */
-  shutdown?: () => void | Promise<void>;
-};
+  shutdown?: () => void | Promise<void>
+}
 
 /**
  * Options for checkRateLimit function
  */
 export type CheckRateLimitOptions = {
   /** Storage backend for rate limit state */
-  store: RateLimitStore;
+  store: RateLimitStore
   /** Unique identifier for the client/request */
-  key: string;
+  key: string
   /** Maximum requests allowed in window */
-  limit: number;
+  limit: number
   /** Window duration in milliseconds */
-  windowMs: number;
+  windowMs: number
   /** Rate limiting algorithm (default: 'sliding-window') */
-  algorithm?: Algorithm;
-};
+  algorithm?: Algorithm
+}
 
 /**
  * Result from checkRateLimit function
  */
 export type CheckRateLimitResult = {
   /** Whether the request is allowed */
-  allowed: boolean;
+  allowed: boolean
   /** Rate limit information */
-  info: RateLimitInfo;
-};
+  info: RateLimitInfo
+}
 
 // ============================================================================
 // Memory Store
 // ============================================================================
 
 type MemoryEntry = {
-  count: number;
-  reset: number;
-};
+  count: number
+  reset: number
+}
 
 /**
  * In-memory store for rate limiting.
@@ -149,34 +147,34 @@ type MemoryEntry = {
  * ```
  */
 export class MemoryStore implements RateLimitStore {
-  private entries = new Map<string, MemoryEntry>();
-  private windowMs = 60_000;
-  private cleanupTimer?: ReturnType<typeof setInterval>;
+  private entries = new Map<string, MemoryEntry>()
+  private windowMs = 60_000
+  private cleanupTimer?: ReturnType<typeof setInterval>
 
   /**
    * Initialize the store with window duration.
    * Sets up automatic cleanup of expired entries.
    */
   init(windowMs: number): void {
-    this.windowMs = windowMs;
+    this.windowMs = windowMs
 
     // Cleanup expired entries at a reasonable interval based on windowMs
     // Use the larger of windowMs or 60 seconds (don't clean up too frequently)
     // But cap at 5 minutes to ensure timely cleanup for long windows
-    const cleanupInterval = Math.min(Math.max(windowMs, 60_000), 300_000);
+    const cleanupInterval = Math.min(Math.max(windowMs, 60_000), 300_000)
 
     this.cleanupTimer = setInterval(() => {
-      const now = Date.now();
+      const now = Date.now()
       for (const [key, entry] of this.entries) {
         if (entry.reset <= now) {
-          this.entries.delete(key);
+          this.entries.delete(key)
         }
       }
-    }, cleanupInterval);
+    }, cleanupInterval)
 
     // Don't keep process alive for cleanup
-    if (typeof this.cleanupTimer.unref === "function") {
-      this.cleanupTimer.unref();
+    if (typeof this.cleanupTimer.unref === 'function') {
+      this.cleanupTimer.unref()
     }
   }
 
@@ -184,39 +182,39 @@ export class MemoryStore implements RateLimitStore {
    * Increment counter and return current state.
    */
   increment(key: string): StoreResult {
-    const now = Date.now();
-    const existing = this.entries.get(key);
+    const now = Date.now()
+    const existing = this.entries.get(key)
 
     if (!existing || existing.reset <= now) {
       // New window
-      const reset = now + this.windowMs;
-      this.entries.set(key, { count: 1, reset });
-      return { count: 1, reset };
+      const reset = now + this.windowMs
+      this.entries.set(key, { count: 1, reset })
+      return { count: 1, reset }
     }
 
     // Increment existing
-    existing.count++;
-    return { count: existing.count, reset: existing.reset };
+    existing.count++
+    return { count: existing.count, reset: existing.reset }
   }
 
   /**
    * Get current state for key.
    */
   get(key: string): StoreResult | undefined {
-    const entry = this.entries.get(key);
+    const entry = this.entries.get(key)
     if (!entry || entry.reset <= Date.now()) {
-      return undefined;
+      return undefined
     }
-    return { count: entry.count, reset: entry.reset };
+    return { count: entry.count, reset: entry.reset }
   }
 
   /**
    * Decrement counter for key.
    */
   decrement(key: string): void {
-    const entry = this.entries.get(key);
+    const entry = this.entries.get(key)
     if (entry && entry.count > 0) {
-      entry.count--;
+      entry.count--
     }
   }
 
@@ -224,14 +222,14 @@ export class MemoryStore implements RateLimitStore {
    * Reset a specific key.
    */
   resetKey(key: string): void {
-    this.entries.delete(key);
+    this.entries.delete(key)
   }
 
   /**
    * Reset all keys.
    */
   resetAll(): void {
-    this.entries.clear();
+    this.entries.clear()
   }
 
   /**
@@ -239,9 +237,9 @@ export class MemoryStore implements RateLimitStore {
    */
   shutdown(): void {
     if (this.cleanupTimer) {
-      clearInterval(this.cleanupTimer);
+      clearInterval(this.cleanupTimer)
     }
-    this.entries.clear();
+    this.entries.clear()
   }
 }
 
@@ -250,7 +248,7 @@ export class MemoryStore implements RateLimitStore {
 // ============================================================================
 
 // Track if we've warned about sliding window degradation
-let slidingWindowWarned = false;
+let slidingWindowWarned = false
 
 /**
  * Check rate limit using the sliding window algorithm.
@@ -270,44 +268,44 @@ async function checkSlidingWindow(
   limit: number,
   windowMs: number,
 ): Promise<CheckRateLimitResult> {
-  const now = Date.now();
-  const currentWindowStart = Math.floor(now / windowMs) * windowMs;
-  const previousWindowStart = currentWindowStart - windowMs;
+  const now = Date.now()
+  const currentWindowStart = Math.floor(now / windowMs) * windowMs
+  const previousWindowStart = currentWindowStart - windowMs
 
-  const previousKey = `${key}:${previousWindowStart}`;
-  const currentKey = `${key}:${currentWindowStart}`;
+  const previousKey = `${key}:${previousWindowStart}`
+  const currentKey = `${key}:${currentWindowStart}`
 
   // Increment current window
-  const current = await store.increment(currentKey);
+  const current = await store.increment(currentKey)
 
   // Get previous window (may not exist)
-  let previousCount = 0;
+  let previousCount = 0
   if (store.get) {
-    const prev = await store.get(previousKey);
-    previousCount = prev?.count ?? 0;
+    const prev = await store.get(previousKey)
+    previousCount = prev?.count ?? 0
   } else if (!slidingWindowWarned) {
     // Warn once that sliding window is degraded to fixed window
-    slidingWindowWarned = true;
+    slidingWindowWarned = true
     console.warn(
-      "[@jf/ratelimit] Store does not implement get() method. " +
-        "Sliding window algorithm will behave like fixed window. " +
+      '[@jf/ratelimit] Store does not implement get() method. ' +
+        'Sliding window algorithm will behave like fixed window. ' +
         "Consider using a store with get() support or switch to 'fixed-window' algorithm.",
-    );
+    )
   }
 
   // Cloudflare's weighted formula
-  const elapsedMs = now - currentWindowStart;
-  const weight = (windowMs - elapsedMs) / windowMs;
-  const estimatedCount = Math.floor(previousCount * weight) + current.count;
+  const elapsedMs = now - currentWindowStart
+  const weight = (windowMs - elapsedMs) / windowMs
+  const estimatedCount = Math.floor(previousCount * weight) + current.count
 
-  const remaining = Math.max(0, limit - estimatedCount);
-  const allowed = estimatedCount <= limit;
-  const reset = currentWindowStart + windowMs;
+  const remaining = Math.max(0, limit - estimatedCount)
+  const allowed = estimatedCount <= limit
+  const reset = currentWindowStart + windowMs
 
   return {
     allowed,
     info: { limit, remaining, reset },
-  };
+  }
 }
 
 // ============================================================================
@@ -332,19 +330,19 @@ async function checkFixedWindow(
   limit: number,
   windowMs: number,
 ): Promise<CheckRateLimitResult> {
-  const now = Date.now();
-  const windowStart = Math.floor(now / windowMs) * windowMs;
-  const windowKey = `${key}:${windowStart}`;
+  const now = Date.now()
+  const windowStart = Math.floor(now / windowMs) * windowMs
+  const windowKey = `${key}:${windowStart}`
 
-  const { count, reset } = await store.increment(windowKey);
+  const { count, reset } = await store.increment(windowKey)
 
-  const remaining = Math.max(0, limit - count);
-  const allowed = count <= limit;
+  const remaining = Math.max(0, limit - count)
+  const allowed = count <= limit
 
   return {
     allowed,
     info: { limit, remaining, reset },
-  };
+  }
 }
 
 // ============================================================================
@@ -383,24 +381,20 @@ async function checkFixedWindow(
 export async function checkRateLimit(
   options: CheckRateLimitOptions,
 ): Promise<CheckRateLimitResult> {
-  const { store, key, limit, windowMs, algorithm = "sliding-window" } = options;
+  const { store, key, limit, windowMs, algorithm = 'sliding-window' } = options
 
   // Validate
   if (limit <= 0) {
-    throw new Error(
-      "[@jf/ratelimit] limit must be a positive number, got: " + limit,
-    );
+    throw new Error(`[@jf/ratelimit] limit must be a positive number, got: ${limit}`)
   }
   if (windowMs <= 0) {
-    throw new Error(
-      "[@jf/ratelimit] windowMs must be a positive number, got: " + windowMs,
-    );
+    throw new Error(`[@jf/ratelimit] windowMs must be a positive number, got: ${windowMs}`)
   }
 
-  if (algorithm === "sliding-window") {
-    return checkSlidingWindow(store, key, limit, windowMs);
+  if (algorithm === 'sliding-window') {
+    return checkSlidingWindow(store, key, limit, windowMs)
   }
-  return checkFixedWindow(store, key, limit, windowMs);
+  return checkFixedWindow(store, key, limit, windowMs)
 }
 
 /**
@@ -430,9 +424,9 @@ export async function checkRateLimit(
  * ```
  */
 export function createRateLimiter(
-  config: Omit<CheckRateLimitOptions, "key">,
+  config: Omit<CheckRateLimitOptions, 'key'>,
 ): (key: string) => Promise<CheckRateLimitResult> {
-  return (key: string) => checkRateLimit({ ...config, key });
+  return (key: string) => checkRateLimit({ ...config, key })
 }
 
 // ============================================================================
@@ -445,5 +439,5 @@ export function createRateLimiter(
  * @internal
  */
 export function resetSlidingWindowWarning(): void {
-  slidingWindowWarned = false;
+  slidingWindowWarned = false
 }

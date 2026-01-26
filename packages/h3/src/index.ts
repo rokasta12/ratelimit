@@ -6,21 +6,15 @@
  * @module
  */
 
-import type { H3Event, EventHandler } from "h3";
-import {
-  getHeader,
-  getRequestIP,
-  setHeader,
-  send,
-  setResponseStatus,
-} from "h3";
 import {
   type Algorithm,
   MemoryStore,
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
-} from "@jf/ratelimit";
+} from '@jf/ratelimit'
+import type { EventHandler, H3Event } from 'h3'
+import { getHeader, getRequestIP, send, setHeader, setResponseStatus } from 'h3'
 
 // Re-export core types
 export {
@@ -33,7 +27,7 @@ export {
   type StoreResult,
   checkRateLimit,
   createRateLimiter,
-} from "@jf/ratelimit";
+} from '@jf/ratelimit'
 
 // ============================================================================
 // Types
@@ -47,76 +41,73 @@ export type RateLimitOptions = {
    * Maximum requests allowed in the time window.
    * @default 60
    */
-  limit?: number | ((event: H3Event) => number | Promise<number>);
+  limit?: number | ((event: H3Event) => number | Promise<number>)
 
   /**
    * Time window in milliseconds.
    * @default 60000 (1 minute)
    */
-  windowMs?: number;
+  windowMs?: number
 
   /**
    * Rate limiting algorithm.
    * @default 'sliding-window'
    */
-  algorithm?: Algorithm;
+  algorithm?: Algorithm
 
   /**
    * Storage backend for rate limit state.
    * @default MemoryStore
    */
-  store?: RateLimitStore;
+  store?: RateLimitStore
 
   /**
    * Generate unique key for each client.
    * @default IP address
    */
-  keyGenerator?: (event: H3Event) => string | Promise<string>;
+  keyGenerator?: (event: H3Event) => string | Promise<string>
 
   /**
    * Handler called when rate limit is exceeded.
    */
-  handler?: (event: H3Event, info: RateLimitInfo) => void | Promise<void>;
+  handler?: (event: H3Event, info: RateLimitInfo) => void | Promise<void>
 
   /**
    * Skip rate limiting for certain requests.
    */
-  skip?: (event: H3Event) => boolean | Promise<boolean>;
+  skip?: (event: H3Event) => boolean | Promise<boolean>
 
   /**
    * Callback when a request is rate limited.
    */
-  onRateLimited?: (event: H3Event, info: RateLimitInfo) => void | Promise<void>;
+  onRateLimited?: (event: H3Event, info: RateLimitInfo) => void | Promise<void>
 
   /**
    * Behavior when store operations fail.
    * @default 'allow'
    */
-  onStoreError?:
-    | "allow"
-    | "deny"
-    | ((error: Error, event: H3Event) => boolean | Promise<boolean>);
+  onStoreError?: 'allow' | 'deny' | ((error: Error, event: H3Event) => boolean | Promise<boolean>)
 
   /**
    * Dry-run mode: track rate limits but don't block requests.
    * @default false
    */
-  dryRun?: boolean;
-};
+  dryRun?: boolean
+}
 
 // ============================================================================
 // Singleton Default Store
 // ============================================================================
 
-let defaultStore: MemoryStore | undefined;
+let defaultStore: MemoryStore | undefined
 
 /**
  * Shutdown the default memory store.
  */
 export function shutdownDefaultStore(): void {
   if (defaultStore) {
-    defaultStore.shutdown();
-    defaultStore = undefined;
+    defaultStore.shutdown()
+    defaultStore = undefined
   }
 }
 
@@ -129,28 +120,28 @@ export function shutdownDefaultStore(): void {
  */
 export function getClientIP(event: H3Event): string {
   // Try H3's built-in IP detection first
-  const ip = getRequestIP(event, { xForwardedFor: true });
+  const ip = getRequestIP(event, { xForwardedFor: true })
   if (ip) {
-    return ip;
+    return ip
   }
 
   // Platform-specific headers
-  const cfIP = getHeader(event, "cf-connecting-ip");
+  const cfIP = getHeader(event, 'cf-connecting-ip')
   if (cfIP) {
-    return cfIP;
+    return cfIP
   }
 
-  const xRealIP = getHeader(event, "x-real-ip");
+  const xRealIP = getHeader(event, 'x-real-ip')
   if (xRealIP) {
-    return xRealIP;
+    return xRealIP
   }
 
-  const xff = getHeader(event, "x-forwarded-for");
+  const xff = getHeader(event, 'x-forwarded-for')
   if (xff) {
-    return xff.split(",")[0].trim();
+    return xff.split(',')[0].trim()
   }
 
-  return "unknown";
+  return 'unknown'
 }
 
 // ============================================================================
@@ -191,90 +182,84 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
   const opts = {
     limit: 60 as number | ((event: H3Event) => number | Promise<number>),
     windowMs: 60_000,
-    algorithm: "sliding-window" as Algorithm,
+    algorithm: 'sliding-window' as Algorithm,
     store: undefined as RateLimitStore | undefined,
     keyGenerator: getClientIP,
     handler: undefined as
       | ((event: H3Event, info: RateLimitInfo) => void | Promise<void>)
       | undefined,
-    skip: undefined as
-      | ((event: H3Event) => boolean | Promise<boolean>)
-      | undefined,
+    skip: undefined as ((event: H3Event) => boolean | Promise<boolean>) | undefined,
     onRateLimited: undefined as
       | ((event: H3Event, info: RateLimitInfo) => void | Promise<void>)
       | undefined,
-    onStoreError: "allow" as
-      | "allow"
-      | "deny"
+    onStoreError: 'allow' as
+      | 'allow'
+      | 'deny'
       | ((error: Error, event: H3Event) => boolean | Promise<boolean>),
     dryRun: false,
     ...options,
-  };
+  }
 
   // Validate
-  if (typeof opts.limit === "number" && opts.limit <= 0) {
-    throw new Error("[@jf/ratelimit-h3] limit must be a positive number");
+  if (typeof opts.limit === 'number' && opts.limit <= 0) {
+    throw new Error('[@jf/ratelimit-h3] limit must be a positive number')
   }
   if (opts.windowMs <= 0) {
-    throw new Error("[@jf/ratelimit-h3] windowMs must be a positive number");
+    throw new Error('[@jf/ratelimit-h3] windowMs must be a positive number')
   }
 
   // Use default store if none provided
-  const store = opts.store ?? (defaultStore ??= new MemoryStore());
+  const store = opts.store ?? (defaultStore ??= new MemoryStore())
 
   // Track initialization
-  let initPromise: Promise<void> | null = null;
+  let initPromise: Promise<void> | null = null
 
-  async function handleStoreError(
-    error: Error,
-    event: H3Event,
-  ): Promise<boolean> {
-    if (typeof opts.onStoreError === "function") {
-      return opts.onStoreError(error, event);
+  async function handleStoreError(error: Error, event: H3Event): Promise<boolean> {
+    if (typeof opts.onStoreError === 'function') {
+      return opts.onStoreError(error, event)
     }
-    return opts.onStoreError === "allow";
+    return opts.onStoreError === 'allow'
   }
 
   return async function rateLimiterHandler(event: H3Event) {
     // Initialize store
     if (!initPromise && store.init) {
-      const result = store.init(opts.windowMs);
-      initPromise = result instanceof Promise ? result : Promise.resolve();
+      const result = store.init(opts.windowMs)
+      initPromise = result instanceof Promise ? result : Promise.resolve()
     }
     if (initPromise) {
       try {
-        await initPromise;
+        await initPromise
       } catch (error) {
         const shouldAllow = await handleStoreError(
           error instanceof Error ? error : new Error(String(error)),
           event,
-        );
+        )
         if (!shouldAllow) {
-          setResponseStatus(event, 500);
-          return send(event, "Rate limiter initialization failed");
+          setResponseStatus(event, 500)
+          return send(event, 'Rate limiter initialization failed')
         }
-        return; // Continue to next handler
+        return // Continue to next handler
       }
     }
 
     // Check skip
     if (opts.skip) {
-      const shouldSkip = await opts.skip(event);
+      const shouldSkip = await opts.skip(event)
       if (shouldSkip) {
-        return; // Continue
+        return // Continue
       }
     }
 
     // Generate key
-    const key = await opts.keyGenerator(event);
+    const key = await opts.keyGenerator(event)
 
     // Get limit
-    const limit =
-      typeof opts.limit === "function" ? await opts.limit(event) : opts.limit;
+    const limit = typeof opts.limit === 'function' ? await opts.limit(event) : opts.limit
 
     // Check rate limit
-    let allowed: boolean;
-    let info: RateLimitInfo;
+    let allowed: boolean
+    let info: RateLimitInfo
 
     try {
       const result = await checkRateLimit({
@@ -283,54 +268,50 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
         limit,
         windowMs: opts.windowMs,
         algorithm: opts.algorithm,
-      });
-      allowed = result.allowed;
-      info = result.info;
+      })
+      allowed = result.allowed
+      info = result.info
     } catch (error) {
       const shouldAllow = await handleStoreError(
         error instanceof Error ? error : new Error(String(error)),
         event,
-      );
+      )
       if (!shouldAllow) {
-        setResponseStatus(event, 500);
-        return send(event, "Rate limiter error");
+        setResponseStatus(event, 500)
+        return send(event, 'Rate limiter error')
       }
-      return; // Continue
+      return // Continue
     }
 
     // Set headers
-    setHeader(event, "X-RateLimit-Limit", String(info.limit));
-    setHeader(event, "X-RateLimit-Remaining", String(info.remaining));
-    setHeader(event, "X-RateLimit-Reset", String(Math.ceil(info.reset / 1000)));
+    setHeader(event, 'X-RateLimit-Limit', String(info.limit))
+    setHeader(event, 'X-RateLimit-Remaining', String(info.remaining))
+    setHeader(event, 'X-RateLimit-Reset', String(Math.ceil(info.reset / 1000)))
 
     // Store info in event context
-    event.context.rateLimit = info;
+    event.context.rateLimit = info
 
     // Handle rate limited
     if (!allowed) {
       if (opts.onRateLimited) {
-        await opts.onRateLimited(event, info);
+        await opts.onRateLimited(event, info)
       }
 
       if (!opts.dryRun) {
-        setResponseStatus(event, 429);
-        setHeader(
-          event,
-          "Retry-After",
-          Math.ceil((info.reset - Date.now()) / 1000),
-        );
+        setResponseStatus(event, 429)
+        setHeader(event, 'Retry-After', Math.ceil((info.reset - Date.now()) / 1000))
 
         if (opts.handler) {
-          await opts.handler(event, info);
-          return;
+          await opts.handler(event, info)
+          return
         }
 
-        return send(event, "Rate limit exceeded");
+        return send(event, 'Rate limit exceeded')
       }
     }
 
     // Continue to next handler (return undefined)
-  };
+  }
 }
 
 /**
@@ -348,5 +329,5 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
  * ```
  */
 export function defineRateLimiter(options?: RateLimitOptions): EventHandler {
-  return rateLimiter(options);
+  return rateLimiter(options)
 }
