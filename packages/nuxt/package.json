@@ -30,7 +30,7 @@
       }
     }
   },
-  "files": ["dist", "runtime"],
+  "files": ["dist", "runtime", "README.md"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
