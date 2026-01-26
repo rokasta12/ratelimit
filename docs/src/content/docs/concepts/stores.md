@@ -5,19 +5,18 @@ description: Storage backends for rate limiting state
 
 ## Overview
 
-Rate limiters need to track request counts somewhere. `@jf/ratelimit` uses a **store** interface that can be implemented for any storage backend.
+Rate limiters need to track request counts. `@jf/ratelimit` uses a **store** interface that can be implemented for any storage backend.
 
 ## Built-in: MemoryStore
 
-The `MemoryStore` is included in the core package and is the default store for all framework adapters.
+Included in the core package. Default for all framework adapters.
 
 ```ts
 import { MemoryStore } from "@jf/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000); // Window duration in ms
+store.init(60_000);
 
-// Use with any framework adapter
 rateLimiter({
   limit: 100,
   windowMs: 60_000,
@@ -25,40 +24,16 @@ rateLimiter({
 });
 ```
 
-### Features
+**Pros:** Zero dependencies, automatic cleanup, full algorithm support
 
-- Zero dependencies
-- Automatic cleanup of expired entries
-- Full algorithm support (including `get()` for sliding window)
-- Suitable for single-instance deployments
-
-### Limitations
-
-- Data is lost on restart
-- Not shared between instances (not suitable for multi-instance/clustered deployments)
+**Cons:** Data lost on restart, not shared between instances
 
 ## Unstorage Adapter
 
-For distributed deployments, use `@jf/ratelimit-unstorage` which wraps [unstorage](https://unstorage.unjs.io/) - a universal storage library.
+For distributed deployments, use `@jf/ratelimit-unstorage` with [unstorage](https://unstorage.unjs.io/).
 
 ```bash
 npm install @jf/ratelimit-unstorage unstorage
-```
-
-### Basic Usage
-
-```ts
-import { createStorage } from "unstorage";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
-
-const storage = createStorage();
-const store = createUnstorageStore({ storage });
-
-rateLimiter({
-  limit: 100,
-  windowMs: 60_000,
-  store,
-});
 ```
 
 ### Redis
@@ -69,9 +44,7 @@ import redisDriver from "unstorage/drivers/redis";
 import { createUnstorageStore } from "@jf/ratelimit-unstorage";
 
 const storage = createStorage({
-  driver: redisDriver({
-    url: "redis://localhost:6379",
-  }),
+  driver: redisDriver({ url: "redis://localhost:6379" }),
 });
 
 const store = createUnstorageStore({ storage });
@@ -85,102 +58,52 @@ import cloudflareKVBindingDriver from "unstorage/drivers/cloudflare-kv-binding";
 import { createUnstorageStore } from "@jf/ratelimit-unstorage";
 
 const storage = createStorage({
-  driver: cloudflareKVBindingDriver({
-    binding: "RATE_LIMIT_KV", // Your KV binding name
-  }),
+  driver: cloudflareKVBindingDriver({ binding: "RATE_LIMIT_KV" }),
 });
 
 const store = createUnstorageStore({ storage });
 ```
 
-### Nuxt with useStorage()
-
-For Nuxt applications, use the `createNuxtStore` helper:
-
-```ts
-// server/middleware/ratelimit.ts
-import { createNuxtStore } from "@jf/ratelimit-unstorage";
-import { rateLimiter } from "@jf/ratelimit-h3";
-
-export default rateLimiter({
-  limit: 100,
-  windowMs: 60_000,
-  store: createNuxtStore(useStorage()),
-});
-```
-
-### Custom Prefix
-
-```ts
-const store = createUnstorageStore({
-  storage,
-  prefix: "my-app:ratelimit:", // Default: 'ratelimit:'
-});
-```
-
 ## Custom Store
 
-Implement the `RateLimitStore` interface for any storage backend:
+Implement the `RateLimitStore` interface:
 
 ```ts
 import type { RateLimitStore, StoreResult } from "@jf/ratelimit";
 
 const customStore: RateLimitStore = {
-  // Required: Initialize (called once)
-  init(windowMs: number): void {
-    // Setup your storage
-  },
+  // Called once before first use
+  init(windowMs: number): void {},
 
   // Required: Increment and return current state
   increment(key: string): StoreResult | Promise<StoreResult> {
-    // Atomically increment and return { count, reset }
     return { count: 1, reset: Date.now() + 60_000 };
   },
 
   // Required: Reset a key
-  resetKey(key: string): void | Promise<void> {
-    // Delete the key
-  },
+  resetKey(key: string): void | Promise<void> {},
 
-  // Optional but recommended: Get current state
+  // Optional: Required for sliding window algorithm
   get(key: string): StoreResult | undefined | Promise<StoreResult | undefined> {
-    // Return current state or undefined if not exists
     return undefined;
   },
 
-  // Optional: Decrement (for skipSuccessfulRequests)
-  decrement(key: string): void | Promise<void> {
-    // Decrement counter
-  },
+  // Optional: For skipSuccessfulRequests
+  decrement(key: string): void | Promise<void> {},
 
   // Optional: Reset all keys
-  resetAll(): void | Promise<void> {
-    // Clear all rate limit data
-  },
+  resetAll(): void | Promise<void> {},
 
-  // Optional: Cleanup
-  shutdown(): void | Promise<void> {
-    // Close connections, clear timers
-  },
-};
-```
-
-### StoreResult Type
-
-```ts
-type StoreResult = {
-  count: number; // Current request count in window
-  reset: number; // Unix timestamp (ms) when window resets
+  // Optional: Cleanup connections/timers
+  shutdown(): void | Promise<void> {},
 };
 ```
 
 ## Store Selection Guide
 
-| Deployment         | Recommended Store          |
-| ------------------ | -------------------------- |
-| Single instance    | `MemoryStore` (default)    |
-| Multiple instances | unstorage + Redis          |
-| Cloudflare Workers | unstorage + Cloudflare KV  |
-| Nuxt (development) | `MemoryStore`              |
-| Nuxt (production)  | unstorage + `useStorage()` |
-| Serverless         | unstorage + Redis/KV       |
+| Deployment         | Recommended Store         |
+| ------------------ | ------------------------- |
+| Single instance    | `MemoryStore` (default)   |
+| Multiple instances | unstorage + Redis         |
+| Cloudflare Workers | unstorage + Cloudflare KV |
+| Serverless         | unstorage + Redis/KV      |

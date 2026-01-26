@@ -5,16 +5,7 @@ description: What is @jf/ratelimit and why use it?
 
 ## What is @jf/ratelimit?
 
-`@jf/ratelimit` is a multi-framework rate limiting library for JavaScript and TypeScript. It provides a unified API for implementing rate limiting across different web frameworks while allowing framework-specific optimizations.
-
-## Why Another Rate Limiter?
-
-Most rate limiting libraries are tied to a single framework. `@jf/ratelimit` takes a different approach:
-
-1. **Framework-agnostic core**: The rate limiting logic is separate from framework adapters
-2. **Consistent API**: Same configuration options across all frameworks
-3. **Pluggable storage**: Works with any storage backend via the store interface
-4. **Modern algorithms**: Implements Cloudflare's sliding window approach for smoother rate limiting
+A multi-framework rate limiting library for JavaScript and TypeScript. Unified API across different web frameworks with pluggable storage backends.
 
 ## Architecture
 
