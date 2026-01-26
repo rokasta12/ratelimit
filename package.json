@@ -22,7 +22,7 @@
     "typecheck": "pnpm -r typecheck",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "changeset": "changeset",
-    "version": "changeset version && pnpm lint:fix",
+    "changeset:version": "changeset version && pnpm lint:fix",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {

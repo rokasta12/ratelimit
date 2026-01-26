@@ -15,12 +15,13 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -38,15 +39,40 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Create Release Pull Request or Publish
+      - name: Check for changesets
         id: changesets
-        uses: changesets/action@v1
-        with:
-          title: "chore: release packages"
-          commit: "chore: release packages"
-          version: pnpm version
-          publish: pnpm release
+        run: |
+          if [ -n "$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null)" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Version packages
+        if: steps.changesets.outputs.has_changesets == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pnpm changeset:version
+          git add -A
+          git commit -m "chore: release packages" || echo "No changes to commit"
+          git push
+
+      - name: Publish to npm
+        if: steps.changesets.outputs.has_changesets == 'true'
+        run: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.has_changesets == 'true'
+        run: |
+          # Get version from core package
+          VERSION=$(node -p "require('./packages/core/package.json').version")
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --generate-notes \
+            || echo "Release may already exist"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
