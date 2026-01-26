@@ -10,8 +10,6 @@ Multi-framework rate limiting for JavaScript/TypeScript.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
-  <a href="https://stackblitz.com/github/rokasta12/ratelimit/tree/main/examples/hono-basic?file=src%2Findex.ts">Try it online</a>
-  &nbsp;&bull;&nbsp;
   <a href="https://rokasta12.github.io/ratelimit/">Documentation</a>
 </p>
 
