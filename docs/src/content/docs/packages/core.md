@@ -25,14 +25,14 @@ For Hono, Express, H3, or Nuxt, use the dedicated packages instead.
 import { checkRateLimit, MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000); // 1 minute window
+store.init(60 * 1000); // 1 minute window
 
 async function handleRequest(userId: string) {
   const result = await checkRateLimit({
     store,
     key: userId,
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   });
 
   if (!result.allowed) {
@@ -51,12 +51,12 @@ Create a reusable rate limiter function:
 import { createRateLimiter, MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000);
+store.init(60 * 1000); // 1 minute
 
 const limiter = createRateLimiter({
   store,
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   algorithm: "sliding-window", // default
 });
 
@@ -74,7 +74,7 @@ Built-in store for single-instance deployments:
 import { MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000);
+store.init(60 * 1000); // 1 minute
 
 // Methods
 store.increment("key"); // Returns { count, reset }

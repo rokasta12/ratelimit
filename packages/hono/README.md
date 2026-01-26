@@ -24,12 +24,18 @@ const app = new Hono();
 app.use(
   rateLimiter({
     limit: 100, // 100 requests
-    windowMs: 60_000, // per minute
+    windowMs: 60 * 1000, // per 1 minute
   }),
 );
 
 // Or apply to specific routes
-app.use("/api/*", rateLimiter({ limit: 50, windowMs: 60_000 }));
+app.use(
+  "/api/*",
+  rateLimiter({
+    limit: 50,
+    windowMs: 60 * 1000,
+  }),
+);
 
 app.get("/", (c) => c.text("Hello!"));
 
@@ -41,7 +47,7 @@ export default app;
 | Option         | Type                                            | Default            | Description                             |
 | -------------- | ----------------------------------------------- | ------------------ | --------------------------------------- |
 | `limit`        | `number`                                        | `100`              | Max requests per window                 |
-| `windowMs`     | `number`                                        | `60000`            | Window size in milliseconds             |
+| `windowMs`     | `number`                                        | `60 * 1000`        | Window size in milliseconds (1 minute)  |
 | `algorithm`    | `"sliding-window"` \| `"fixed-window"`          | `"sliding-window"` | Rate limiting algorithm                 |
 | `keyGenerator` | `(c: Context) => string`                        | IP-based           | Function to generate unique key         |
 | `skip`         | `(c: Context) => boolean`                       | -                  | Skip rate limiting for certain requests |
@@ -54,7 +60,7 @@ export default app;
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     keyGenerator: (c) => {
       // Rate limit by user ID instead of IP
       return c.get("userId") || c.req.header("x-forwarded-for") || "anonymous";
@@ -69,7 +75,7 @@ app.use(
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     handler: (c, info) => {
       return c.json(
         { error: "Too many requests", retryAfter: info.retryAfter },
@@ -96,7 +102,7 @@ const storage = createStorage({
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     store: createUnstorageStore({ storage }),
   }),
 );

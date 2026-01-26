@@ -29,7 +29,7 @@ const storage = createStorage(); // Memory by default
 const store = createUnstorageStore({ storage });
 
 // Use with any framework adapter
-rateLimiter({ limit: 100, windowMs: 60_000, store });
+rateLimiter({ limit: 100, windowMs: 60 * 1000, store }); // 1 minute
 ```
 
 ## Redis

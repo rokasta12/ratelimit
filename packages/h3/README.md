@@ -23,7 +23,12 @@ import { rateLimiter } from "@jfungus/ratelimit-h3";
 const app = createApp();
 
 // Apply rate limiting globally
-app.use(rateLimiter({ limit: 100, windowMs: 60_000 }));
+app.use(
+  rateLimiter({
+    limit: 100,
+    windowMs: 60 * 1000, // 1 minute
+  }),
+);
 
 const router = createRouter();
 router.get(
@@ -42,7 +47,7 @@ import { rateLimiter } from "@jfungus/ratelimit-h3";
 
 export default rateLimiter({
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
 });
 ```
 
@@ -51,7 +56,7 @@ export default rateLimiter({
 | Option         | Type                                            | Default            | Description                             |
 | -------------- | ----------------------------------------------- | ------------------ | --------------------------------------- |
 | `limit`        | `number`                                        | `100`              | Max requests per window                 |
-| `windowMs`     | `number`                                        | `60000`            | Window size in milliseconds             |
+| `windowMs`     | `number`                                        | `60 * 1000`        | Window size in milliseconds (1 minute)  |
 | `algorithm`    | `"sliding-window"` \| `"fixed-window"`          | `"sliding-window"` | Rate limiting algorithm                 |
 | `keyGenerator` | `(event: H3Event) => string`                    | IP-based           | Function to generate unique key         |
 | `skip`         | `(event: H3Event) => boolean`                   | -                  | Skip rate limiting for certain requests |
@@ -66,7 +71,7 @@ import { getHeader } from "h3";
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     keyGenerator: (event) => {
       // Rate limit by API key
       return getHeader(event, "x-api-key") || "anonymous";
@@ -91,7 +96,7 @@ const storage = createStorage({
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     store: createUnstorageStore({ storage }),
   }),
 );

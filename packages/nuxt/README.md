@@ -20,7 +20,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100, // 100 requests
-    windowMs: 60_000, // per minute
+    windowMs: 60 * 1000, // 1 minute
   },
 });
 ```
@@ -41,7 +41,7 @@ export default defineNuxtConfig({
     limit: 100,
 
     // Window size in milliseconds
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
 
     // Rate limiting algorithm
     algorithm: "sliding-window", // or "fixed-window"
@@ -81,7 +81,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
   nitro: {
     storage: {
@@ -102,7 +102,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
   nitro: {
     storage: {
@@ -122,7 +122,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
   nitro: {
     storage: {

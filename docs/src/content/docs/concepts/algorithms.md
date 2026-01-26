@@ -24,7 +24,7 @@ Window 1 (00:00-01:00)    Window 2 (01:00-02:00)
 ```ts
 rateLimiter({
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   algorithm: "fixed-window",
 });
 ```
@@ -61,7 +61,7 @@ weight = (windowMs - elapsedMs) / windowMs
 ```ts
 rateLimiter({
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   algorithm: "sliding-window", // default
 });
 ```

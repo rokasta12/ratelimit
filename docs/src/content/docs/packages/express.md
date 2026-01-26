@@ -22,7 +22,7 @@ const app = express();
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000, // 1 minute
+    windowMs: 60 * 1000, // 1 minute
   }),
 );
 
@@ -64,7 +64,7 @@ Rate limit by user ID instead of IP:
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
     keyGenerator: (req) => req.user?.id ?? req.ip ?? "anonymous",
   }),
 );
@@ -76,7 +76,7 @@ app.use(
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
     handler: (req, res, info) => {
       res.status(429).json({
         error: "Too Many Requests",
@@ -90,8 +90,8 @@ app.use(
 ## Per-Route Limits
 
 ```ts
-const apiLimiter = rateLimiter({ limit: 100, windowMs: 60_000 });
-const authLimiter = rateLimiter({ limit: 5, windowMs: 60_000 });
+const apiLimiter = rateLimiter({ limit: 100, windowMs: 60 * 1000 }); // 1 minute
+const authLimiter = rateLimiter({ limit: 5, windowMs: 60 * 1000 }); // 1 minute
 
 app.use("/api/", apiLimiter);
 app.use("/auth/", authLimiter);
@@ -124,7 +124,7 @@ const store = createUnstorageStore({
   }),
 });
 
-app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
+app.use(rateLimiter({ limit: 100, windowMs: 60 * 1000, store })); // 1 minute
 ```
 
 ## Related

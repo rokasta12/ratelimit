@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
 });
 ```
@@ -46,7 +46,7 @@ export default defineNuxtConfig({
   rateLimit: {
     include: ["/api/**"],
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
 });
 ```

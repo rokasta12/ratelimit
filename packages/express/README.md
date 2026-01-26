@@ -24,12 +24,18 @@ const app = express();
 app.use(
   rateLimiter({
     limit: 100, // 100 requests
-    windowMs: 60_000, // per minute
+    windowMs: 60 * 1000, // per 1 minute
   }),
 );
 
 // Or apply to specific routes
-app.use("/api", rateLimiter({ limit: 50, windowMs: 60_000 }));
+app.use(
+  "/api",
+  rateLimiter({
+    limit: 50,
+    windowMs: 60 * 1000,
+  }),
+);
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -43,7 +49,7 @@ app.listen(3000);
 | Option                   | Type                                   | Default            | Description                             |
 | ------------------------ | -------------------------------------- | ------------------ | --------------------------------------- |
 | `limit`                  | `number`                               | `100`              | Max requests per window                 |
-| `windowMs`               | `number`                               | `60000`            | Window size in milliseconds             |
+| `windowMs`               | `number`                               | `60 * 1000`        | Window size in milliseconds (1 minute)  |
 | `algorithm`              | `"sliding-window"` \| `"fixed-window"` | `"sliding-window"` | Rate limiting algorithm                 |
 | `keyGenerator`           | `(req: Request) => string`             | IP-based           | Function to generate unique key         |
 | `skip`                   | `(req: Request) => boolean`            | -                  | Skip rate limiting for certain requests |
@@ -58,7 +64,7 @@ app.listen(3000);
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     keyGenerator: (req) => {
       // Rate limit by user ID instead of IP
       return req.user?.id || req.ip || "anonymous";
@@ -73,7 +79,7 @@ app.use(
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     // Don't count successful requests (2xx) against the limit
     skipSuccessfulRequests: true,
     // Or skip specific requests entirely
@@ -98,7 +104,7 @@ const storage = createStorage({
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     store: createUnstorageStore({ storage }),
   }),
 );

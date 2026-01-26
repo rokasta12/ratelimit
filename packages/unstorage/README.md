@@ -31,7 +31,7 @@ const store = createUnstorageStore({ storage });
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
     store,
   })
 );

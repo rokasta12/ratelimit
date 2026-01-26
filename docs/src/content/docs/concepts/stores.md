@@ -15,11 +15,11 @@ Included in the core package. Default for all framework adapters.
 import { MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000);
+store.init(60 * 1000); // 1 minute
 
 rateLimiter({
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   store,
 });
 ```
@@ -77,7 +77,7 @@ const customStore: RateLimitStore = {
 
   // Required: Increment and return current state
   increment(key: string): StoreResult | Promise<StoreResult> {
-    return { count: 1, reset: Date.now() + 60_000 };
+    return { count: 1, reset: Date.now() + 60 * 1000 }; // 1 minute
   },
 
   // Required: Reset a key

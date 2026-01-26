@@ -18,11 +18,11 @@ npm install @jfungus/ratelimit
 import { RateLimiter, MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
-store.init(60_000); // 1 minute window
+store.init(60 * 1000); // 1 minute window
 
 const limiter = new RateLimiter({
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   store,
 });
 
@@ -44,7 +44,7 @@ Cloudflare-style weighted sliding window for smoother rate limiting:
 const limiter = new RateLimiter({
   algorithm: "sliding-window",
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   store,
 });
 ```
@@ -57,7 +57,7 @@ Simple counter that resets at fixed intervals:
 const limiter = new RateLimiter({
   algorithm: "fixed-window",
   limit: 100,
-  windowMs: 60_000,
+  windowMs: 60 * 1000, // 1 minute
   store,
 });
 ```

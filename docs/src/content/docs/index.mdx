@@ -39,8 +39,8 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Packages
 
-| Package                                                   | Description                   | Use Case                          |
-| --------------------------------------------------------- | ----------------------------- | --------------------------------- |
+| Package                                                        | Description                   | Use Case                          |
+| -------------------------------------------------------------- | ----------------------------- | --------------------------------- |
 | [@jfungus/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore | Direct usage, custom integrations |
 | [@jfungus/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               | Hono apps, Cloudflare Workers     |
 | [@jfungus/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            | Express.js applications           |
@@ -60,7 +60,7 @@ const app = new Hono();
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   }),
 );
 
@@ -81,5 +81,5 @@ const store = createUnstorageStore({
   }),
 });
 
-app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
+app.use(rateLimiter({ limit: 100, windowMs: 60 * 1000, store })); // 1 minute
 ```

@@ -50,7 +50,7 @@ const app = new Hono();
 app.use(
   rateLimiter({
     limit: 100, // 100 requests
-    windowMs: 60_000, // per minute
+    windowMs: 60 * 1000, // per 1 minute
   }),
 );
 
@@ -64,12 +64,22 @@ That's it! Your API is now rate limited.
 | Option         | Type       | Default            | Description                             |
 | -------------- | ---------- | ------------------ | --------------------------------------- |
 | `limit`        | `number`   | `100`              | Max requests per window                 |
-| `windowMs`     | `number`   | `60000`            | Window size in milliseconds             |
+| `windowMs`     | `number`   | `60 * 1000`        | Window size in milliseconds (1 minute)  |
 | `algorithm`    | `string`   | `"sliding-window"` | `"sliding-window"` or `"fixed-window"`  |
 | `keyGenerator` | `function` | IP-based           | Function to identify clients            |
 | `skip`         | `function` | -                  | Skip rate limiting for certain requests |
 | `handler`      | `function` | 429 response       | Custom rate limit exceeded handler      |
 | `store`        | `Store`    | `MemoryStore`      | Custom storage backend                  |
+
+### Common `windowMs` values
+
+```ts
+windowMs: 1000; // 1 second
+windowMs: 60 * 1000; // 1 minute
+windowMs: 5 * 60 * 1000; // 5 minutes
+windowMs: 15 * 60 * 1000; // 15 minutes
+windowMs: 60 * 60 * 1000; // 1 hour
+```
 
 [See all options in documentation](https://rokasta12.github.io/ratelimit/)
 
@@ -93,7 +103,13 @@ import express from "express";
 import { rateLimiter } from "@jfungus/ratelimit-express";
 
 const app = express();
-app.use(rateLimiter({ limit: 100, windowMs: 60_000 }));
+
+app.use(
+  rateLimiter({
+    limit: 100,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+  }),
+);
 ```
 
 ### H3/Nitro
@@ -103,7 +119,13 @@ import { createApp } from "h3";
 import { rateLimiter } from "@jfungus/ratelimit-h3";
 
 const app = createApp();
-app.use(rateLimiter({ limit: 100, windowMs: 60_000 }));
+
+app.use(
+  rateLimiter({
+    limit: 100,
+    windowMs: 60 * 1000, // 1 minute
+  }),
+);
 ```
 
 ### Nuxt
@@ -114,7 +136,7 @@ export default defineNuxtConfig({
   modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   },
 });
 ```
@@ -125,7 +147,7 @@ export default defineNuxtConfig({
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     keyGenerator: (c) => c.req.header("X-API-Key") ?? "anonymous",
   }),
 );
@@ -145,7 +167,7 @@ const storage = createStorage({
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000,
+    windowMs: 60 * 1000,
     store: createUnstorageStore({ storage }),
   }),
 );
@@ -158,7 +180,11 @@ app.use(
 Cloudflare-style weighted sliding window for smoother rate limiting:
 
 ```ts
-rateLimiter({ algorithm: "sliding-window", limit: 100, windowMs: 60_000 });
+rateLimiter({
+  algorithm: "sliding-window",
+  limit: 100,
+  windowMs: 60 * 1000,
+});
 ```
 
 ### Fixed Window
@@ -166,7 +192,11 @@ rateLimiter({ algorithm: "sliding-window", limit: 100, windowMs: 60_000 });
 Simple counter that resets at fixed intervals:
 
 ```ts
-rateLimiter({ algorithm: "fixed-window", limit: 100, windowMs: 60_000 });
+rateLimiter({
+  algorithm: "fixed-window",
+  limit: 100,
+  windowMs: 60 * 1000,
+});
 ```
 
 ## Contributing

@@ -22,7 +22,7 @@ const app = new Hono();
 app.use(
   rateLimiter({
     limit: 100,
-    windowMs: 60_000, // 1 minute
+    windowMs: 60 * 1000, // 1 minute
   }),
 );
 
@@ -55,7 +55,7 @@ app.use(
       const isPremium = c.req.header("X-Premium");
       return isPremium ? 1000 : 100;
     },
-    windowMs: 60_000,
+    windowMs: 60 * 1000, // 1 minute
   }),
 );
 ```
@@ -63,8 +63,8 @@ app.use(
 ## Per-Route Limits
 
 ```ts
-const strictLimiter = rateLimiter({ limit: 10, windowMs: 60_000 });
-const normalLimiter = rateLimiter({ limit: 100, windowMs: 60_000 });
+const strictLimiter = rateLimiter({ limit: 10, windowMs: 60 * 1000 }); // 1 minute
+const normalLimiter = rateLimiter({ limit: 100, windowMs: 60 * 1000 }); // 1 minute
 
 app.use("/api/auth/*", strictLimiter);
 app.use("/api/*", normalLimiter);
@@ -109,7 +109,7 @@ const store = createUnstorageStore({
   }),
 });
 
-app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
+app.use(rateLimiter({ limit: 100, windowMs: 60 * 1000, store })); // 1 minute
 ```
 
 ## Related
