@@ -41,8 +41,8 @@ describe('@jfungus/ratelimit-hono', () => {
 
       it('sets context variables', async () => {
         const app = new Hono()
-        let rateLimitInfo: any
-        let storeAccess: any
+        let rateLimitInfo: { limit: number; remaining: number } | undefined
+        let storeAccess: { resetKey: (key: string) => void | Promise<void> } | undefined
 
         app.use(rateLimiter({ limit: 10, windowMs: 60_000 }))
         app.get('/', (c) => {
@@ -54,10 +54,10 @@ describe('@jfungus/ratelimit-hono', () => {
         await app.request('/')
 
         expect(rateLimitInfo).toBeDefined()
-        expect(rateLimitInfo.limit).toBe(10)
-        expect(rateLimitInfo.remaining).toBe(9)
+        expect(rateLimitInfo?.limit).toBe(10)
+        expect(rateLimitInfo?.remaining).toBe(9)
         expect(storeAccess).toBeDefined()
-        expect(typeof storeAccess.resetKey).toBe('function')
+        expect(typeof storeAccess?.resetKey).toBe('function')
       })
     })
 

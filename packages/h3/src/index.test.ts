@@ -17,7 +17,7 @@ async function makeRequest(
       url: path,
       headers: { ...headers, host: 'localhost' },
       on: (_: string, cb: () => void) => cb(),
-    } as any
+    } as unknown as import('http').IncomingMessage
 
     let statusCode = 200
     const responseHeaders: Record<string, string> = {}
@@ -37,12 +37,12 @@ async function makeRequest(
             get: (name: string) => responseHeaders[name.toLowerCase()] || null,
           },
           text: async () => body,
-        } as any)
+        } as unknown as Response)
       },
       writeHead: (code: number) => {
         statusCode = code
       },
-    } as any
+    } as unknown as import('http').ServerResponse
 
     // Intercept statusCode setter
     Object.defineProperty(res, 'statusCode', {

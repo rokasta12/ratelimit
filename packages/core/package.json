@@ -37,10 +37,7 @@
       }
     }
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "files": ["dist", "src"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

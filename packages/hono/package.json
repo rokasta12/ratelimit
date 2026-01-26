@@ -13,13 +13,7 @@
   "bugs": {
     "url": "https://github.com/rokasta12/ratelimit/issues"
   },
-  "keywords": [
-    "hono",
-    "rate-limit",
-    "rate-limiter",
-    "middleware",
-    "cloudflare-workers"
-  ],
+  "keywords": ["hono", "rate-limit", "rate-limiter", "middleware", "cloudflare-workers"],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -36,10 +30,7 @@
       }
     }
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "files": ["dist", "src"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
