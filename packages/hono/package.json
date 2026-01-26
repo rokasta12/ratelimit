@@ -1,7 +1,7 @@
 {
-  "name": "@jf/ratelimit-hono",
+  "name": "@jfungus/ratelimit-hono",
   "version": "0.0.1",
-  "description": "Hono middleware for @jf/ratelimit",
+  "description": "Hono middleware for @jfungus/ratelimit",
   "author": "rokasta12",
   "license": "MIT",
   "repository": {
@@ -36,7 +36,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@jf/ratelimit": "workspace:*"
+    "@jfungus/ratelimit": "workspace:*"
   },
   "peerDependencies": {
     "hono": ">=4.0.0"

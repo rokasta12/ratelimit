@@ -1,5 +1,5 @@
 ---
-title: "@jf/ratelimit-unstorage"
+title: "@jfungus/ratelimit-unstorage"
 description: "Distributed storage adapter for rate limiting. Connect to Redis, Cloudflare KV, Vercel KV, and 20+ storage backends."
 ---
 
@@ -8,7 +8,7 @@ Storage adapter using [unstorage](https://unstorage.unjs.io/) - connect to Redis
 ## Installation
 
 ```bash
-npm install @jf/ratelimit-unstorage unstorage
+npm install @jfungus/ratelimit-unstorage unstorage
 ```
 
 ## When to Use
@@ -23,7 +23,7 @@ For single-instance deployments, the built-in `MemoryStore` is simpler and faste
 
 ```ts
 import { createStorage } from "unstorage";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage(); // Memory by default
 const store = createUnstorageStore({ storage });
@@ -37,7 +37,7 @@ rateLimiter({ limit: 100, windowMs: 60_000, store });
 ```ts
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: redisDriver({
@@ -53,7 +53,7 @@ const store = createUnstorageStore({ storage });
 ```ts
 import { createStorage } from "unstorage";
 import cloudflareKVBindingDriver from "unstorage/drivers/cloudflare-kv-binding";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: cloudflareKVBindingDriver({
@@ -69,7 +69,7 @@ const store = createUnstorageStore({ storage });
 ```ts
 import { createStorage } from "unstorage";
 import vercelKVDriver from "unstorage/drivers/vercel-kv";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: vercelKVDriver(),
@@ -97,7 +97,7 @@ const store = createUnstorageStore({
 For Nuxt applications using `useStorage()`:
 
 ```ts
-import { createNuxtStore } from "@jf/ratelimit-unstorage";
+import { createNuxtStore } from "@jfungus/ratelimit-unstorage";
 
 // In a Nuxt server route or middleware
 const store = createNuxtStore(useStorage());
@@ -124,4 +124,4 @@ Any [unstorage driver](https://unstorage.unjs.io/drivers) works:
 
 - [unstorage Documentation](https://unstorage.unjs.io/)
 - [Stores](/ratelimit/concepts/stores/) - Store interface details
-- [@jf/ratelimit](/ratelimit/packages/core/) - Core library
+- [@jfungus/ratelimit](/ratelimit/packages/core/) - Core library

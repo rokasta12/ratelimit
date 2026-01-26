@@ -1,4 +1,4 @@
-# @jf/ratelimit
+# @jfungus/ratelimit
 
 Multi-framework rate limiting for JavaScript/TypeScript.
 
@@ -23,16 +23,16 @@ Multi-framework rate limiting for JavaScript/TypeScript.
 
 ```bash
 # For Hono
-npm install @jf/ratelimit-hono
+npm install @jfungus/ratelimit-hono
 
 # For Express
-npm install @jf/ratelimit-express
+npm install @jfungus/ratelimit-express
 
 # For H3/Nitro
-npm install @jf/ratelimit-h3
+npm install @jfungus/ratelimit-h3
 
 # For Nuxt
-npm install @jf/ratelimit-nuxt
+npm install @jfungus/ratelimit-nuxt
 ```
 
 ### Usage
@@ -41,7 +41,7 @@ npm install @jf/ratelimit-nuxt
 
 ```ts
 import { Hono } from "hono";
-import { rateLimiter } from "@jf/ratelimit-hono";
+import { rateLimiter } from "@jfungus/ratelimit-hono";
 
 const app = new Hono();
 
@@ -59,7 +59,7 @@ app.get("/", (c) => c.text("Hello!"));
 
 ```ts
 import express from "express";
-import { rateLimiter } from "@jf/ratelimit-express";
+import { rateLimiter } from "@jfungus/ratelimit-express";
 
 const app = express();
 
@@ -75,7 +75,7 @@ app.use(
 
 ```ts
 import { createApp, eventHandler } from "h3";
-import { rateLimiter } from "@jf/ratelimit-h3";
+import { rateLimiter } from "@jfungus/ratelimit-h3";
 
 const app = createApp();
 app.use(rateLimiter({ limit: 100, windowMs: 60_000 }));
@@ -86,7 +86,7 @@ app.use(rateLimiter({ limit: 100, windowMs: 60_000 }));
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
     windowMs: 60_000,
@@ -98,12 +98,12 @@ export default defineNuxtConfig({
 
 | Package                   | Description                                  | npm                                                                                                                   |
 | ------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `@jf/ratelimit`           | Core library with algorithms and MemoryStore | [![npm](https://img.shields.io/npm/v/@jf/ratelimit)](https://www.npmjs.com/package/@jf/ratelimit)                     |
-| `@jf/ratelimit-hono`      | Hono middleware                              | [![npm](https://img.shields.io/npm/v/@jf/ratelimit-hono)](https://www.npmjs.com/package/@jf/ratelimit-hono)           |
-| `@jf/ratelimit-express`   | Express middleware                           | [![npm](https://img.shields.io/npm/v/@jf/ratelimit-express)](https://www.npmjs.com/package/@jf/ratelimit-express)     |
-| `@jf/ratelimit-h3`        | H3/Nitro middleware                          | [![npm](https://img.shields.io/npm/v/@jf/ratelimit-h3)](https://www.npmjs.com/package/@jf/ratelimit-h3)               |
-| `@jf/ratelimit-nuxt`      | Nuxt module                                  | [![npm](https://img.shields.io/npm/v/@jf/ratelimit-nuxt)](https://www.npmjs.com/package/@jf/ratelimit-nuxt)           |
-| `@jf/ratelimit-unstorage` | unstorage adapter                            | [![npm](https://img.shields.io/npm/v/@jf/ratelimit-unstorage)](https://www.npmjs.com/package/@jf/ratelimit-unstorage) |
+| `@jfungus/ratelimit`           | Core library with algorithms and MemoryStore | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit)](https://www.npmjs.com/package/@jfungus/ratelimit)                     |
+| `@jfungus/ratelimit-hono`      | Hono middleware                              | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-hono)](https://www.npmjs.com/package/@jfungus/ratelimit-hono)           |
+| `@jfungus/ratelimit-express`   | Express middleware                           | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-express)](https://www.npmjs.com/package/@jfungus/ratelimit-express)     |
+| `@jfungus/ratelimit-h3`        | H3/Nitro middleware                          | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-h3)](https://www.npmjs.com/package/@jfungus/ratelimit-h3)               |
+| `@jfungus/ratelimit-nuxt`      | Nuxt module                                  | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-nuxt)](https://www.npmjs.com/package/@jfungus/ratelimit-nuxt)           |
+| `@jfungus/ratelimit-unstorage` | unstorage adapter                            | [![npm](https://img.shields.io/npm/v/@jfungus/ratelimit-unstorage)](https://www.npmjs.com/package/@jfungus/ratelimit-unstorage) |
 
 ## Algorithms
 
@@ -137,7 +137,7 @@ weight = (windowMs - elapsedMs) / windowMs
 Built-in memory store for single-instance deployments:
 
 ```ts
-import { MemoryStore } from "@jf/ratelimit";
+import { MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
 store.init(60_000);
@@ -145,12 +145,12 @@ store.init(60_000);
 
 ### Distributed Storage
 
-Use `@jf/ratelimit-unstorage` for Redis, Cloudflare KV, and more:
+Use `@jfungus/ratelimit-unstorage` for Redis, Cloudflare KV, and more:
 
 ```ts
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: redisDriver({ url: "redis://localhost:6379" }),

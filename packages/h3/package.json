@@ -1,7 +1,7 @@
 {
-  "name": "@jf/ratelimit-h3",
+  "name": "@jfungus/ratelimit-h3",
   "version": "0.0.1",
-  "description": "H3/Nitro middleware for @jf/ratelimit",
+  "description": "H3/Nitro middleware for @jfungus/ratelimit",
   "author": "rokasta12",
   "license": "MIT",
   "repository": {
@@ -36,7 +36,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@jf/ratelimit": "workspace:*"
+    "@jfungus/ratelimit": "workspace:*"
   },
   "peerDependencies": {
     "h3": ">=1.10.0"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Algorithm, ModuleOptions } from './module'
 
-describe('@jf/ratelimit-nuxt', () => {
+describe('@jfungus/ratelimit-nuxt', () => {
   describe('ModuleOptions type', () => {
     it('accepts valid options', () => {
       const validOptions: ModuleOptions = {

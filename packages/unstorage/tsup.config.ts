@@ -8,5 +8,5 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   target: 'es2022',
-  external: ['unstorage', '@jf/ratelimit'],
+  external: ['unstorage', '@jfungus/ratelimit'],
 })

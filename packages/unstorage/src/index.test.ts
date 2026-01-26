@@ -2,7 +2,7 @@ import { createStorage } from 'unstorage'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createNuxtStore, createUnstorageStore } from './index'
 
-describe('@jf/ratelimit-unstorage', () => {
+describe('@jfungus/ratelimit-unstorage', () => {
   describe('createUnstorageStore', () => {
     let storage: ReturnType<typeof createStorage>
 

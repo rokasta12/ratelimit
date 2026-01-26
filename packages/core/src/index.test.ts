@@ -7,7 +7,7 @@ import {
   resetSlidingWindowWarning,
 } from './index'
 
-describe('@jf/ratelimit core', () => {
+describe('@jfungus/ratelimit core', () => {
   describe('MemoryStore', () => {
     let store: MemoryStore
 

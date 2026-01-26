@@ -3,7 +3,7 @@ import request from 'supertest'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryStore, rateLimiter, shutdownDefaultStore } from './index'
 
-describe('@jf/ratelimit-express', () => {
+describe('@jfungus/ratelimit-express', () => {
   afterEach(() => {
     shutdownDefaultStore()
   })

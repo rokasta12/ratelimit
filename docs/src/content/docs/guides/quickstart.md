@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Get started with @jf/ratelimit in under 5 minutes. Install, configure, and protect your API.
+description: Get started with @jfungus/ratelimit in under 5 minutes. Install, configure, and protect your API.
 ---
 
 ## Installation
@@ -9,26 +9,26 @@ Choose the package for your framework:
 
 ```bash
 # For Hono
-npm install @jf/ratelimit-hono
+npm install @jfungus/ratelimit-hono
 
 # For Express
-npm install @jf/ratelimit-express
+npm install @jfungus/ratelimit-express
 
 # For H3/Nitro
-npm install @jf/ratelimit-h3
+npm install @jfungus/ratelimit-h3
 
 # For Nuxt
-npm install @jf/ratelimit-nuxt
+npm install @jfungus/ratelimit-nuxt
 ```
 
 ## Package Guides
 
 Each package has detailed documentation:
 
-- [@jf/ratelimit-hono](/ratelimit/packages/hono/) - Hono & Cloudflare Workers
-- [@jf/ratelimit-express](/ratelimit/packages/express/) - Express.js
-- [@jf/ratelimit-h3](/ratelimit/packages/h3/) - H3 & Nitro
-- [@jf/ratelimit-nuxt](/ratelimit/packages/nuxt/) - Nuxt 3
+- [@jfungus/ratelimit-hono](/ratelimit/packages/hono/) - Hono & Cloudflare Workers
+- [@jfungus/ratelimit-express](/ratelimit/packages/express/) - Express.js
+- [@jfungus/ratelimit-h3](/ratelimit/packages/h3/) - H3 & Nitro
+- [@jfungus/ratelimit-nuxt](/ratelimit/packages/nuxt/) - Nuxt 3
 
 ## Configuration Options
 
@@ -49,4 +49,4 @@ All packages share these common options:
 
 - [Algorithms](/ratelimit/concepts/algorithms/) - Learn about fixed vs sliding window
 - [Stores](/ratelimit/concepts/stores/) - Use Redis or other distributed stores
-- [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter for production
+- [@jfungus/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter for production

@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit-nuxt - Nuxt module for rate limiting
+ * @jfungus/ratelimit-nuxt - Nuxt module for rate limiting
  *
  * Provides automatic rate limiting middleware for Nuxt applications.
  * Uses Nuxt's built-in `useStorage()` for distributed deployments.
@@ -15,7 +15,7 @@ import { addServerHandler, createResolver, defineNuxtModule } from '@nuxt/kit'
 
 /**
  * Rate limiting algorithm type.
- * Must match the Algorithm type from @jf/ratelimit core.
+ * Must match the Algorithm type from @jfungus/ratelimit core.
  */
 export type Algorithm = 'fixed-window' | 'sliding-window'
 
@@ -105,7 +105,7 @@ export interface ModuleOptions {
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: '@jf/ratelimit-nuxt',
+    name: '@jfungus/ratelimit-nuxt',
     configKey: 'rateLimit',
     compatibility: {
       nuxt: '^3.0.0',

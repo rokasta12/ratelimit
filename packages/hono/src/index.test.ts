@@ -8,7 +8,7 @@ import {
   shutdownDefaultStore,
 } from './index'
 
-describe('@jf/ratelimit-hono', () => {
+describe('@jfungus/ratelimit-hono', () => {
   afterEach(() => {
     shutdownDefaultStore()
   })

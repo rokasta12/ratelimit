@@ -1,5 +1,5 @@
 ---
-title: "@jf/ratelimit-express"
+title: "@jfungus/ratelimit-express"
 description: "Rate limiting middleware for Express.js. Protect your Express APIs with sliding window rate limiting and Redis support."
 ---
 
@@ -8,14 +8,14 @@ Rate limiting middleware for [Express](https://expressjs.com/) - the most popula
 ## Installation
 
 ```bash
-npm install @jf/ratelimit-express
+npm install @jfungus/ratelimit-express
 ```
 
 ## Basic Usage
 
 ```ts
 import express from "express";
-import { rateLimiter } from "@jf/ratelimit-express";
+import { rateLimiter } from "@jfungus/ratelimit-express";
 
 const app = express();
 
@@ -116,7 +116,7 @@ app.use(
 ```ts
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const store = createUnstorageStore({
   storage: createStorage({
@@ -131,4 +131,4 @@ app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
 
 - [Express Documentation](https://expressjs.com/)
 - [Stores](/ratelimit/concepts/stores/) - Redis, KV storage
-- [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter
+- [@jfungus/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter

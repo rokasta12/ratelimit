@@ -8,7 +8,7 @@ import {
   type RateLimitStore,
   type StoreResult,
   checkRateLimit,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 import { createError, defineEventHandler, getHeader, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig, useStorage } from '#imports'
 
@@ -55,7 +55,7 @@ function getStore(config: RateLimitConfig): RateLimitStore {
 
 /**
  * Create a rate limit store using Nuxt's useStorage.
- * This properly implements the RateLimitStore interface from @jf/ratelimit.
+ * This properly implements the RateLimitStore interface from @jfungus/ratelimit.
  */
 function createNuxtStorageStore(storageKey: string, initialWindowMs: number): RateLimitStore {
   const storage = useStorage(storageKey)

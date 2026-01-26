@@ -1,7 +1,7 @@
 {
-  "name": "@jf/ratelimit-nuxt",
+  "name": "@jfungus/ratelimit-nuxt",
   "version": "0.0.1",
-  "description": "Nuxt module for @jf/ratelimit - rate limiting with Nuxt's useStorage",
+  "description": "Nuxt module for @jfungus/ratelimit - rate limiting with Nuxt's useStorage",
   "author": "rokasta12",
   "license": "MIT",
   "repository": {
@@ -34,7 +34,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@jf/ratelimit": "workspace:*",
+    "@jfungus/ratelimit": "workspace:*",
     "@nuxt/kit": "^3.17.4"
   },
   "devDependencies": {

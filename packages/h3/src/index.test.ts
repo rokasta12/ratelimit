@@ -59,7 +59,7 @@ async function makeRequest(
 // Simple key generator for tests (since mock requests don't have real sockets)
 const testKeyGenerator = () => 'test-client'
 
-describe('@jf/ratelimit-h3', () => {
+describe('@jfungus/ratelimit-h3', () => {
   afterEach(() => {
     shutdownDefaultStore()
   })

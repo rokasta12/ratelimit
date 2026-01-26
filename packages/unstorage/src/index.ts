@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit-unstorage - unstorage adapter for @jf/ratelimit
+ * @jfungus/ratelimit-unstorage - unstorage adapter for @jfungus/ratelimit
  *
  * Provides a storage adapter that works with any unstorage driver,
  * including Redis, Cloudflare KV, Vercel KV, Upstash, and more.
@@ -7,11 +7,11 @@
  * @module
  */
 
-import type { RateLimitStore, StoreResult } from '@jf/ratelimit'
+import type { RateLimitStore, StoreResult } from '@jfungus/ratelimit'
 import type { Storage } from 'unstorage'
 
 // Re-export core types
-export type { RateLimitStore, StoreResult } from '@jf/ratelimit'
+export type { RateLimitStore, StoreResult } from '@jfungus/ratelimit'
 
 // ============================================================================
 // Types
@@ -67,8 +67,8 @@ export type UnstorageStoreOptions = {
  * ```ts
  * import { createStorage } from 'unstorage'
  * import redisDriver from 'unstorage/drivers/redis'
- * import { createUnstorageStore } from '@jf/ratelimit-unstorage'
- * import { rateLimiter } from '@jf/ratelimit-hono'
+ * import { createUnstorageStore } from '@jfungus/ratelimit-unstorage'
+ * import { rateLimiter } from '@jfungus/ratelimit-hono'
  *
  * const storage = createStorage({
  *   driver: redisDriver({ url: 'redis://localhost:6379' }),
@@ -229,7 +229,7 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
  * @example
  * ```ts
  * // server/middleware/ratelimit.ts
- * import { createNuxtStore } from '@jf/ratelimit-unstorage'
+ * import { createNuxtStore } from '@jfungus/ratelimit-unstorage'
  * import { defineEventHandler } from 'h3'
  *
  * export default defineEventHandler((event) => {

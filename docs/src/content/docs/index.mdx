@@ -16,7 +16,7 @@ hero:
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
-## Why @jf/ratelimit?
+## Why @jfungus/ratelimit?
 
 <CardGrid stagger>
   <Card title="Any Framework" icon="puzzle">
@@ -41,18 +41,18 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 | Package                                                   | Description                   | Use Case                          |
 | --------------------------------------------------------- | ----------------------------- | --------------------------------- |
-| [@jf/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore | Direct usage, custom integrations |
-| [@jf/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               | Hono apps, Cloudflare Workers     |
-| [@jf/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            | Express.js applications           |
-| [@jf/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           | Nitro servers, standalone H3      |
-| [@jf/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   | Nuxt 3 applications               |
-| [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Storage adapter               | Redis, KV, distributed setups     |
+| [@jfungus/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore | Direct usage, custom integrations |
+| [@jfungus/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               | Hono apps, Cloudflare Workers     |
+| [@jfungus/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            | Express.js applications           |
+| [@jfungus/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           | Nitro servers, standalone H3      |
+| [@jfungus/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   | Nuxt 3 applications               |
+| [@jfungus/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Storage adapter               | Redis, KV, distributed setups     |
 
 ## Quick Example
 
 ```ts
 import { Hono } from "hono";
-import { rateLimiter } from "@jf/ratelimit-hono";
+import { rateLimiter } from "@jfungus/ratelimit-hono";
 
 const app = new Hono();
 
@@ -73,7 +73,7 @@ app.get("/api/data", (c) => c.json({ success: true }));
 // With Redis for distributed deployments
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const store = createUnstorageStore({
   storage: createStorage({

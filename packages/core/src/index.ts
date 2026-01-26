@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit - Framework-agnostic rate limiting library
+ * @jfungus/ratelimit - Framework-agnostic rate limiting library
  *
  * @module
  */
@@ -133,7 +133,7 @@ type MemoryEntry = {
  *
  * @example
  * ```ts
- * import { MemoryStore, checkRateLimit } from '@jf/ratelimit'
+ * import { MemoryStore, checkRateLimit } from '@jfungus/ratelimit'
  *
  * const store = new MemoryStore()
  * store.init(60_000) // 1 minute window
@@ -287,7 +287,7 @@ async function checkSlidingWindow(
     // Warn once that sliding window is degraded to fixed window
     slidingWindowWarned = true
     console.warn(
-      '[@jf/ratelimit] Store does not implement get() method. ' +
+      '[@jfungus/ratelimit] Store does not implement get() method. ' +
         'Sliding window algorithm will behave like fixed window. ' +
         "Consider using a store with get() support or switch to 'fixed-window' algorithm.",
     )
@@ -360,7 +360,7 @@ async function checkFixedWindow(
  *
  * @example
  * ```ts
- * import { checkRateLimit, MemoryStore } from '@jf/ratelimit'
+ * import { checkRateLimit, MemoryStore } from '@jfungus/ratelimit'
  *
  * const store = new MemoryStore()
  * store.init(60_000)
@@ -385,10 +385,10 @@ export async function checkRateLimit(
 
   // Validate
   if (limit <= 0) {
-    throw new Error(`[@jf/ratelimit] limit must be a positive number, got: ${limit}`)
+    throw new Error(`[@jfungus/ratelimit] limit must be a positive number, got: ${limit}`)
   }
   if (windowMs <= 0) {
-    throw new Error(`[@jf/ratelimit] windowMs must be a positive number, got: ${windowMs}`)
+    throw new Error(`[@jfungus/ratelimit] windowMs must be a positive number, got: ${windowMs}`)
   }
 
   if (algorithm === 'sliding-window') {
@@ -408,7 +408,7 @@ export async function checkRateLimit(
  *
  * @example
  * ```ts
- * import { createRateLimiter, MemoryStore } from '@jf/ratelimit'
+ * import { createRateLimiter, MemoryStore } from '@jfungus/ratelimit'
  *
  * const store = new MemoryStore()
  * store.init(60_000)

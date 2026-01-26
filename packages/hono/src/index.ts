@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit-hono - Rate limiting middleware for Hono
+ * @jfungus/ratelimit-hono - Rate limiting middleware for Hono
  *
  * @module
  */
@@ -10,7 +10,7 @@ import {
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 import type { Context, Env, MiddlewareHandler } from 'hono'
 
 // Re-export core types
@@ -24,7 +24,7 @@ export {
   type StoreResult,
   checkRateLimit,
   createRateLimiter,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 
 // ============================================================================
 // Types
@@ -254,7 +254,7 @@ let defaultStore: MemoryStore | undefined
  *
  * @example
  * ```ts
- * import { shutdownDefaultStore } from '@jf/ratelimit-hono'
+ * import { shutdownDefaultStore } from '@jfungus/ratelimit-hono'
  *
  * process.on('SIGTERM', () => {
  *   shutdownDefaultStore()
@@ -473,7 +473,7 @@ function createDefaultResponse(
  * @example
  * ```ts
  * import { Hono } from 'hono'
- * import { rateLimiter } from '@jf/ratelimit-hono'
+ * import { rateLimiter } from '@jfungus/ratelimit-hono'
  *
  * const app = new Hono()
  *
@@ -519,11 +519,11 @@ export const rateLimiter = <E extends Env = Env>(
 
   // Validate configuration
   if (typeof opts.limit === 'number' && opts.limit <= 0) {
-    throw new Error(`[@jf/ratelimit-hono] limit must be a positive number, got: ${opts.limit}`)
+    throw new Error(`[@jfungus/ratelimit-hono] limit must be a positive number, got: ${opts.limit}`)
   }
   if (opts.windowMs <= 0) {
     throw new Error(
-      `[@jf/ratelimit-hono] windowMs must be a positive number, got: ${opts.windowMs}`,
+      `[@jfungus/ratelimit-hono] windowMs must be a positive number, got: ${opts.windowMs}`,
     )
   }
 
@@ -685,7 +685,7 @@ export const rateLimiter = <E extends Env = Env>(
  *
  * @example
  * ```ts
- * import { cloudflareRateLimiter } from '@jf/ratelimit-hono'
+ * import { cloudflareRateLimiter } from '@jfungus/ratelimit-hono'
  *
  * type Bindings = { RATE_LIMITER: RateLimitBinding }
  *

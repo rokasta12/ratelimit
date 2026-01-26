@@ -5,7 +5,7 @@ description: Understanding rate limiting algorithms
 
 ## Overview
 
-`@jf/ratelimit` supports two rate limiting algorithms:
+`@jfungus/ratelimit` supports two rate limiting algorithms:
 
 1. **Fixed Window** - Simple and predictable
 2. **Sliding Window** - Smoother and more accurate (default)

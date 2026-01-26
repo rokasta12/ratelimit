@@ -1,5 +1,5 @@
 ---
-title: "@jf/ratelimit-hono"
+title: "@jfungus/ratelimit-hono"
 description: "Rate limiting middleware for Hono framework. Protect your Hono APIs and Cloudflare Workers with sliding window rate limiting."
 ---
 
@@ -8,14 +8,14 @@ Rate limiting middleware for [Hono](https://hono.dev/) - the fast, lightweight w
 ## Installation
 
 ```bash
-npm install @jf/ratelimit-hono
+npm install @jfungus/ratelimit-hono
 ```
 
 ## Basic Usage
 
 ```ts
 import { Hono } from "hono";
-import { rateLimiter } from "@jf/ratelimit-hono";
+import { rateLimiter } from "@jfungus/ratelimit-hono";
 
 const app = new Hono();
 
@@ -86,7 +86,7 @@ app.get("/api/data", (c) => {
 For native Cloudflare rate limiting:
 
 ```ts
-import { cloudflareRateLimiter } from "@jf/ratelimit-hono";
+import { cloudflareRateLimiter } from "@jfungus/ratelimit-hono";
 
 app.use(
   cloudflareRateLimiter({
@@ -101,7 +101,7 @@ app.use(
 ```ts
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const store = createUnstorageStore({
   storage: createStorage({
@@ -116,4 +116,4 @@ app.use(rateLimiter({ limit: 100, windowMs: 60_000, store }));
 
 - [Hono Documentation](https://hono.dev/)
 - [Stores](/ratelimit/concepts/stores/) - Redis, KV storage
-- [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter
+- [@jfungus/ratelimit-unstorage](/ratelimit/packages/unstorage/) - Storage adapter

@@ -6,7 +6,7 @@ export default defineConfig({
   base: '/ratelimit',
   integrations: [
     starlight({
-      title: '@jf/ratelimit',
+      title: '@jfungus/ratelimit',
       description:
         'Open-source rate limiting for Node.js and Edge. Protect APIs with Hono, Express, H3, Nuxt.',
       social: {
@@ -40,12 +40,12 @@ export default defineConfig({
         {
           label: 'Packages',
           items: [
-            { label: '@jf/ratelimit (Core)', slug: 'packages/core' },
-            { label: '@jf/ratelimit-hono', slug: 'packages/hono' },
-            { label: '@jf/ratelimit-express', slug: 'packages/express' },
-            { label: '@jf/ratelimit-h3', slug: 'packages/h3' },
-            { label: '@jf/ratelimit-nuxt', slug: 'packages/nuxt' },
-            { label: '@jf/ratelimit-unstorage', slug: 'packages/unstorage' },
+            { label: '@jfungus/ratelimit (Core)', slug: 'packages/core' },
+            { label: '@jfungus/ratelimit-hono', slug: 'packages/hono' },
+            { label: '@jfungus/ratelimit-express', slug: 'packages/express' },
+            { label: '@jfungus/ratelimit-h3', slug: 'packages/h3' },
+            { label: '@jfungus/ratelimit-nuxt', slug: 'packages/nuxt' },
+            { label: '@jfungus/ratelimit-unstorage', slug: 'packages/unstorage' },
           ],
         },
         {

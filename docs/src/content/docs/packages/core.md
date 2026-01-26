@@ -1,5 +1,5 @@
 ---
-title: "@jf/ratelimit"
+title: "@jfungus/ratelimit"
 description: "Core rate limiting library with sliding window algorithm and in-memory store for Node.js and Edge runtimes."
 ---
 
@@ -8,7 +8,7 @@ The core package provides rate limiting algorithms and a built-in memory store. 
 ## Installation
 
 ```bash
-npm install @jf/ratelimit
+npm install @jfungus/ratelimit
 ```
 
 ## When to Use
@@ -22,7 +22,7 @@ For Hono, Express, H3, or Nuxt, use the dedicated packages instead.
 ## Basic Usage
 
 ```ts
-import { checkRateLimit, MemoryStore } from "@jf/ratelimit";
+import { checkRateLimit, MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
 store.init(60_000); // 1 minute window
@@ -48,7 +48,7 @@ async function handleRequest(userId: string) {
 Create a reusable rate limiter function:
 
 ```ts
-import { createRateLimiter, MemoryStore } from "@jf/ratelimit";
+import { createRateLimiter, MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
 store.init(60_000);
@@ -71,7 +71,7 @@ console.log(result.info); // { limit, remaining, reset }
 Built-in store for single-instance deployments:
 
 ```ts
-import { MemoryStore } from "@jf/ratelimit";
+import { MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
 store.init(60_000);

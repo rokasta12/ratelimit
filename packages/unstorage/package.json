@@ -1,7 +1,7 @@
 {
-  "name": "@jf/ratelimit-unstorage",
+  "name": "@jfungus/ratelimit-unstorage",
   "version": "0.0.1",
-  "description": "unstorage adapter for @jf/ratelimit - supports Redis, Cloudflare KV, Vercel KV, and more",
+  "description": "unstorage adapter for @jfungus/ratelimit - supports Redis, Cloudflare KV, Vercel KV, and more",
   "author": "rokasta12",
   "license": "MIT",
   "repository": {
@@ -36,7 +36,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@jf/ratelimit": "workspace:*"
+    "@jfungus/ratelimit": "workspace:*"
   },
   "peerDependencies": {
     "unstorage": ">=1.10.0"

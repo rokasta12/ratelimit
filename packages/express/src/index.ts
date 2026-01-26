@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit-express - Rate limiting middleware for Express
+ * @jfungus/ratelimit-express - Rate limiting middleware for Express
  *
  * @module
  */
@@ -10,7 +10,7 @@ import {
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
 
 // Re-export core types
@@ -24,7 +24,7 @@ export {
   type StoreResult,
   checkRateLimit,
   createRateLimiter,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 
 // ============================================================================
 // Types
@@ -190,7 +190,7 @@ export function getClientIP(req: Request): string {
  * @example
  * ```ts
  * import express from 'express'
- * import { rateLimiter } from '@jf/ratelimit-express'
+ * import { rateLimiter } from '@jfungus/ratelimit-express'
  *
  * const app = express()
  *
@@ -234,10 +234,10 @@ export function rateLimiter(options?: RateLimitOptions): RequestHandler {
 
   // Validate
   if (typeof opts.limit === 'number' && opts.limit <= 0) {
-    throw new Error('[@jf/ratelimit-express] limit must be a positive number')
+    throw new Error('[@jfungus/ratelimit-express] limit must be a positive number')
   }
   if (opts.windowMs <= 0) {
-    throw new Error('[@jf/ratelimit-express] windowMs must be a positive number')
+    throw new Error('[@jfungus/ratelimit-express] windowMs must be a positive number')
   }
 
   // Use default store if none provided

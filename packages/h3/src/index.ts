@@ -1,5 +1,5 @@
 /**
- * @jf/ratelimit-h3 - Rate limiting middleware for H3/Nitro
+ * @jfungus/ratelimit-h3 - Rate limiting middleware for H3/Nitro
  *
  * Works with H3, Nitro, and Nuxt server routes.
  *
@@ -12,7 +12,7 @@ import {
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 import type { EventHandler, H3Event } from 'h3'
 import { eventHandler, getHeader, getRequestIP, send, setHeader, setResponseStatus } from 'h3'
 
@@ -27,7 +27,7 @@ export {
   type StoreResult,
   checkRateLimit,
   createRateLimiter,
-} from '@jf/ratelimit'
+} from '@jfungus/ratelimit'
 
 // ============================================================================
 // Types
@@ -157,7 +157,7 @@ export function getClientIP(event: H3Event): string {
  * @example
  * ```ts
  * // server/middleware/ratelimit.ts
- * import { rateLimiter } from '@jf/ratelimit-h3'
+ * import { rateLimiter } from '@jfungus/ratelimit-h3'
  *
  * export default rateLimiter({
  *   limit: 100,
@@ -168,7 +168,7 @@ export function getClientIP(event: H3Event): string {
  * @example Using with route-specific limits
  * ```ts
  * // server/api/expensive.post.ts
- * import { rateLimiter } from '@jf/ratelimit-h3'
+ * import { rateLimiter } from '@jfungus/ratelimit-h3'
  *
  * export default defineEventHandler({
  *   onRequest: [rateLimiter({ limit: 5, windowMs: 60_000 })],
@@ -202,10 +202,10 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
 
   // Validate
   if (typeof opts.limit === 'number' && opts.limit <= 0) {
-    throw new Error('[@jf/ratelimit-h3] limit must be a positive number')
+    throw new Error('[@jfungus/ratelimit-h3] limit must be a positive number')
   }
   if (opts.windowMs <= 0) {
-    throw new Error('[@jf/ratelimit-h3] windowMs must be a positive number')
+    throw new Error('[@jfungus/ratelimit-h3] windowMs must be a positive number')
   }
 
   // Use default store if none provided
@@ -320,7 +320,7 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
  * @example
  * ```ts
  * // server/middleware/ratelimit.ts
- * import { defineRateLimiter } from '@jf/ratelimit-h3'
+ * import { defineRateLimiter } from '@jfungus/ratelimit-h3'
  *
  * export default defineRateLimiter({
  *   limit: 100,

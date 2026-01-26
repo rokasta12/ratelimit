@@ -1,5 +1,5 @@
 ---
-title: "@jf/ratelimit-nuxt"
+title: "@jfungus/ratelimit-nuxt"
 description: "Rate limiting module for Nuxt 3. Zero-config API protection with sliding window algorithms and distributed storage support."
 ---
 
@@ -8,7 +8,7 @@ Rate limiting module for [Nuxt 3](https://nuxt.com/) - the intuitive Vue.js meta
 ## Installation
 
 ```bash
-npm install @jf/ratelimit-nuxt
+npm install @jfungus/ratelimit-nuxt
 ```
 
 ## Basic Usage
@@ -16,7 +16,7 @@ npm install @jf/ratelimit-nuxt
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     limit: 100,
     windowMs: 60_000,
@@ -42,7 +42,7 @@ That's it! Rate limiting is now applied to all server routes.
 
 ```ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     include: ["/api/**"],
     limit: 100,
@@ -55,7 +55,7 @@ export default defineNuxtConfig({
 
 ```ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     storage: "redis",
   },
@@ -74,7 +74,7 @@ export default defineNuxtConfig({
 
 ```ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     storage: "cloudflare",
   },
@@ -105,7 +105,7 @@ export default defineEventHandler((event) => {
 
 ```ts
 export default defineNuxtConfig({
-  modules: ["@jf/ratelimit-nuxt"],
+  modules: ["@jfungus/ratelimit-nuxt"],
   rateLimit: {
     enabled: process.env.NODE_ENV === "production",
   },
@@ -115,5 +115,5 @@ export default defineNuxtConfig({
 ## Related
 
 - [Nuxt Documentation](https://nuxt.com/)
-- [@jf/ratelimit-h3](/ratelimit/packages/h3/) - For custom H3 middleware
+- [@jfungus/ratelimit-h3](/ratelimit/packages/h3/) - For custom H3 middleware
 - [Stores](/ratelimit/concepts/stores/) - Storage options

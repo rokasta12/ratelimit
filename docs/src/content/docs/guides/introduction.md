@@ -1,9 +1,9 @@
 ---
 title: Introduction
-description: What is @jf/ratelimit? A multi-framework rate limiting library for Node.js and Edge runtimes.
+description: What is @jfungus/ratelimit? A multi-framework rate limiting library for Node.js and Edge runtimes.
 ---
 
-## What is @jf/ratelimit?
+## What is @jfungus/ratelimit?
 
 A rate limiting library for JavaScript and TypeScript that works across frameworks. One consistent API for Hono, Express, H3, Nuxt, and more.
 
@@ -20,12 +20,12 @@ A rate limiting library for JavaScript and TypeScript that works across framewor
 ┌─────────────────────────────────────────────────────────┐
 │                    Your Application                      │
 ├─────────────────────────────────────────────────────────┤
-│  @jf/ratelimit-hono  │  @jf/ratelimit-express  │  ...   │
+│  @jfungus/ratelimit-hono  │  @jfungus/ratelimit-express  │  ...   │
 ├─────────────────────────────────────────────────────────┤
-│                     @jf/ratelimit                        │
+│                     @jfungus/ratelimit                        │
 │              (core algorithms + MemoryStore)             │
 ├─────────────────────────────────────────────────────────┤
-│     MemoryStore     │     @jf/ratelimit-unstorage       │
+│     MemoryStore     │     @jfungus/ratelimit-unstorage       │
 │    (built-in)       │    (Redis, KV, etc.)              │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -34,12 +34,12 @@ A rate limiting library for JavaScript and TypeScript that works across framewor
 
 | Package                                                   | Description                   |
 | --------------------------------------------------------- | ----------------------------- |
-| [@jf/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore |
-| [@jf/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               |
-| [@jf/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            |
-| [@jf/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           |
-| [@jf/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   |
-| [@jf/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Distributed storage adapter   |
+| [@jfungus/ratelimit](/ratelimit/packages/core/)                | Core algorithms + MemoryStore |
+| [@jfungus/ratelimit-hono](/ratelimit/packages/hono/)           | Hono middleware               |
+| [@jfungus/ratelimit-express](/ratelimit/packages/express/)     | Express middleware            |
+| [@jfungus/ratelimit-h3](/ratelimit/packages/h3/)               | H3/Nitro middleware           |
+| [@jfungus/ratelimit-nuxt](/ratelimit/packages/nuxt/)           | Nuxt module                   |
+| [@jfungus/ratelimit-unstorage](/ratelimit/packages/unstorage/) | Distributed storage adapter   |
 
 ## Algorithms
 

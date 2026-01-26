@@ -1,7 +1,7 @@
 {
-  "name": "@jf/ratelimit-express",
+  "name": "@jfungus/ratelimit-express",
   "version": "0.0.1",
-  "description": "Express middleware for @jf/ratelimit",
+  "description": "Express middleware for @jfungus/ratelimit",
   "author": "rokasta12",
   "license": "MIT",
   "repository": {
@@ -36,7 +36,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@jf/ratelimit": "workspace:*"
+    "@jfungus/ratelimit": "workspace:*"
   },
   "peerDependencies": {
     "express": ">=4.0.0"

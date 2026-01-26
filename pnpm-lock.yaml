@@ -53,7 +53,7 @@ importers:
 
   packages/express:
     dependencies:
-      '@jf/ratelimit':
+      '@jfungus/ratelimit':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -81,7 +81,7 @@ importers:
 
   packages/h3:
     dependencies:
-      '@jf/ratelimit':
+      '@jfungus/ratelimit':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -100,7 +100,7 @@ importers:
 
   packages/hono:
     dependencies:
-      '@jf/ratelimit':
+      '@jfungus/ratelimit':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -119,7 +119,7 @@ importers:
 
   packages/nuxt:
     dependencies:
-      '@jf/ratelimit':
+      '@jfungus/ratelimit':
         specifier: workspace:*
         version: link:../core
       '@nuxt/kit':
@@ -144,7 +144,7 @@ importers:
 
   packages/unstorage:
     dependencies:
-      '@jf/ratelimit':
+      '@jfungus/ratelimit':
         specifier: workspace:*
         version: link:../core
     devDependencies:

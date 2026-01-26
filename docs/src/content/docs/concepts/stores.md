@@ -5,14 +5,14 @@ description: Storage backends for rate limiting state
 
 ## Overview
 
-Rate limiters need to track request counts. `@jf/ratelimit` uses a **store** interface that can be implemented for any storage backend.
+Rate limiters need to track request counts. `@jfungus/ratelimit` uses a **store** interface that can be implemented for any storage backend.
 
 ## Built-in: MemoryStore
 
 Included in the core package. Default for all framework adapters.
 
 ```ts
-import { MemoryStore } from "@jf/ratelimit";
+import { MemoryStore } from "@jfungus/ratelimit";
 
 const store = new MemoryStore();
 store.init(60_000);
@@ -30,10 +30,10 @@ rateLimiter({
 
 ## Unstorage Adapter
 
-For distributed deployments, use `@jf/ratelimit-unstorage` with [unstorage](https://unstorage.unjs.io/).
+For distributed deployments, use `@jfungus/ratelimit-unstorage` with [unstorage](https://unstorage.unjs.io/).
 
 ```bash
-npm install @jf/ratelimit-unstorage unstorage
+npm install @jfungus/ratelimit-unstorage unstorage
 ```
 
 ### Redis
@@ -41,7 +41,7 @@ npm install @jf/ratelimit-unstorage unstorage
 ```ts
 import { createStorage } from "unstorage";
 import redisDriver from "unstorage/drivers/redis";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: redisDriver({ url: "redis://localhost:6379" }),
@@ -55,7 +55,7 @@ const store = createUnstorageStore({ storage });
 ```ts
 import { createStorage } from "unstorage";
 import cloudflareKVBindingDriver from "unstorage/drivers/cloudflare-kv-binding";
-import { createUnstorageStore } from "@jf/ratelimit-unstorage";
+import { createUnstorageStore } from "@jfungus/ratelimit-unstorage";
 
 const storage = createStorage({
   driver: cloudflareKVBindingDriver({ binding: "RATE_LIMIT_KV" }),
@@ -69,7 +69,7 @@ const store = createUnstorageStore({ storage });
 Implement the `RateLimitStore` interface:
 
 ```ts
-import type { RateLimitStore, StoreResult } from "@jf/ratelimit";
+import type { RateLimitStore, StoreResult } from "@jfungus/ratelimit";
 
 const customStore: RateLimitStore = {
   // Called once before first use
