@@ -13,7 +13,13 @@
   "bugs": {
     "url": "https://github.com/rokasta12/ratelimit/issues"
   },
-  "keywords": ["nuxt", "nuxt-module", "rate-limit", "rate-limiter", "middleware"],
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "rate-limit",
+    "rate-limiter",
+    "middleware"
+  ],
   "type": "module",
   "main": "./dist/module.cjs",
   "module": "./dist/module.js",
@@ -30,7 +36,12 @@
       }
     }
   },
-  "files": ["dist", "runtime", "README.md"],
+  "files": [
+    "dist",
+    "runtime",
+    "runtime-js",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -39,10 +50,11 @@
   },
   "dependencies": {
     "@jfungus/ratelimit": "workspace:*",
-    "@nuxt/kit": "^3.17.4"
+    "@nuxt/kit": "^3.17.4",
+    "defu": "^6.1.4"
   },
   "devDependencies": {
-    "@nuxt/schema": "^3.17.4",
+    "@nuxt/schema": "^3.21.0",
     "nuxt": "^3.17.4",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",

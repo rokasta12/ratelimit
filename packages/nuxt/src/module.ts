@@ -8,6 +8,28 @@
  */
 
 import { addServerHandler, createResolver, defineNuxtModule } from '@nuxt/kit'
+import { defu } from 'defu'
+
+// Declare runtime config types to ensure Nuxt includes all fields
+declare module 'nuxt/schema' {
+  interface RuntimeConfig {
+    rateLimit: {
+      limit: number
+      windowMs: number
+      algorithm: string
+      storage: string
+      skip: string[]
+      include: string[]
+      routesJson: string
+      statusCode: number
+      message: string
+      headers: boolean
+      headerStyle: string
+      keyGenerator: string
+      dryRun: boolean
+    }
+  }
+}
 
 // ============================================================================
 // Types
@@ -18,6 +40,35 @@ import { addServerHandler, createResolver, defineNuxtModule } from '@nuxt/kit'
  * Must match the Algorithm type from @jfungus/ratelimit core.
  */
 export type Algorithm = 'fixed-window' | 'sliding-window'
+
+/**
+ * Header style for rate limit headers.
+ * - 'legacy': X-RateLimit-* headers (default, widely supported)
+ * - 'standard': RateLimit-* headers (IETF draft standard)
+ * - 'both': Include both header styles
+ */
+export type HeaderStyle = 'legacy' | 'standard' | 'both'
+
+/**
+ * Per-route rate limit configuration
+ */
+export interface RouteRateLimitConfig {
+  /**
+   * Maximum number of requests allowed in the window.
+   */
+  limit: number
+
+  /**
+   * Time window in milliseconds.
+   */
+  windowMs: number
+
+  /**
+   * Rate limiting algorithm.
+   * @default inherits from global config
+   */
+  algorithm?: Algorithm
+}
 
 export interface ModuleOptions {
   /**
@@ -73,6 +124,29 @@ export interface ModuleOptions {
   include?: string[]
 
   /**
+   * Per-route rate limit configuration.
+   * Routes are matched in order, first match wins.
+   * Supports glob patterns.
+   *
+   * @example
+   * ```ts
+   * routes: {
+   *   '/api/auth/**': { limit: 5, windowMs: 60000 },
+   *   '/api/upload': { limit: 10, windowMs: 300000 },
+   *   '/api/**': { limit: 100, windowMs: 60000 },
+   * }
+   * ```
+   */
+  routes?: Record<string, RouteRateLimitConfig>
+
+  /**
+   * Internal: JSON-serialized routes config for runtime.
+   * Do not set this directly - use `routes` instead.
+   * @internal
+   */
+  routesJson?: string
+
+  /**
    * Response status code when rate limited.
    * @default 429
    */
@@ -89,6 +163,15 @@ export interface ModuleOptions {
    * @default true
    */
   headers?: boolean
+
+  /**
+   * Header style to use for rate limit headers.
+   * - 'legacy': X-RateLimit-* headers (default, widely supported)
+   * - 'standard': RateLimit-* headers (IETF draft standard)
+   * - 'both': Include both header styles
+   * @default 'both'
+   */
+  headerStyle?: HeaderStyle
 
   /**
    * Custom key generator for identifying clients.
@@ -115,13 +198,18 @@ export default defineNuxtModule<ModuleOptions>({
     enabled: true,
     limit: 100,
     windowMs: 60_000,
-    algorithm: 'sliding-window',
+    algorithm: 'sliding-window' as Algorithm,
     storage: 'memory',
     skip: ['/_nuxt/**', '/__nuxt_error'],
+    include: [] as string[],
+    routes: {} as Record<string, RouteRateLimitConfig>,
+    // routesJson is used in runtime config (routes gets serialized to this)
+    routesJson: '{}',
     statusCode: 429,
     message: 'Too Many Requests',
     headers: true,
-    keyGenerator: 'ip',
+    headerStyle: 'both' as HeaderStyle,
+    keyGenerator: 'ip' as const,
     dryRun: false,
   },
   setup(options, nuxt) {
@@ -131,24 +219,42 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolver = createResolver(import.meta.url)
 
-    // Make options available at runtime
-    nuxt.options.runtimeConfig.rateLimit = {
+    // Build the complete config object with fields that survive Nuxt's schema filtering
+    const rateLimitConfig = {
       limit: options.limit!,
       windowMs: options.windowMs!,
       algorithm: options.algorithm!,
       storage: options.storage!,
       skip: options.skip!,
-      include: options.include,
+      include: options.include || [],
+      routesJson: JSON.stringify(options.routes || {}),
       statusCode: options.statusCode!,
       message: options.message!,
       headers: options.headers!,
+      headerStyle: options.headerStyle || 'both',
       keyGenerator: options.keyGenerator!,
       dryRun: options.dryRun!,
     }
 
+    // Set the runtime config with all options (some fields may be stripped by Nuxt)
+    nuxt.options.runtimeConfig.rateLimit = defu(
+      nuxt.options.runtimeConfig.rateLimit as object,
+      rateLimitConfig,
+    )
+
+    // Use Nitro's virtual modules to inject the config at build time
+    // This bypasses Nuxt's runtime config schema filtering and ensures
+    // routesJson and headerStyle survive to production
+    // @ts-expect-error - nitro:config hook exists but may not be in types
+    nuxt.hook('nitro:config', (nitroConfig: { virtual?: Record<string, string> }) => {
+      // Create a virtual module with the full config
+      nitroConfig.virtual = nitroConfig.virtual || {}
+      nitroConfig.virtual['#ratelimit-config'] = `export default ${JSON.stringify(rateLimitConfig)}`
+    })
+
     // Add the server middleware
     addServerHandler({
-      handler: resolver.resolve('../runtime/server/middleware/ratelimit'),
+      handler: resolver.resolve('../runtime-js/server/middleware/ratelimit.js'),
       middleware: true,
     })
   },
