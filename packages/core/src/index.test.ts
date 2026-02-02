@@ -80,7 +80,9 @@ describe('@jfungus/ratelimit core', () => {
       shortStore.increment('key1')
       expect(shortStore.get('key1')).toBeDefined()
 
-      vi.advanceTimersByTime(1001)
+      // Entries are stored with 2x windowMs internally for sliding window support
+      // So they expire after 2x the window duration
+      vi.advanceTimersByTime(2001)
       expect(shortStore.get('key1')).toBeUndefined()
 
       shortStore.shutdown()
@@ -95,7 +97,8 @@ describe('@jfungus/ratelimit core', () => {
       const result1 = shortStore.increment('key1')
       expect(result1.count).toBe(1)
 
-      vi.advanceTimersByTime(1001)
+      // Entries expire after 2x windowMs (internal storage for sliding window)
+      vi.advanceTimersByTime(2001)
       const result2 = shortStore.increment('key1')
       expect(result2.count).toBe(1) // New window
 

@@ -180,32 +180,41 @@ export class MemoryStore implements RateLimitStore {
 
   /**
    * Increment counter and return current state.
+   *
+   * Note: Internally stores entries with 2x windowMs for sliding window support.
+   * Returns the logical 1x reset time to callers.
    */
   increment(key: string): StoreResult {
     const now = Date.now()
     const existing = this.entries.get(key)
 
     if (!existing || existing.reset <= now) {
-      // New window
-      const reset = now + this.windowMs
-      this.entries.set(key, { count: 1, reset })
-      return { count: 1, reset }
+      // New window - use 2x windowMs internally for sliding window support
+      const internalReset = now + this.windowMs * 2
+      const externalReset = now + this.windowMs
+      this.entries.set(key, { count: 1, reset: internalReset })
+      return { count: 1, reset: externalReset }
     }
 
     // Increment existing
     existing.count++
-    return { count: existing.count, reset: existing.reset }
+    // Return the logical reset time (internal - windowMs)
+    const externalReset = existing.reset - this.windowMs
+    return { count: existing.count, reset: externalReset }
   }
 
   /**
    * Get current state for key.
+   *
+   * Note: Returns the logical 1x reset time (internal stores 2x for sliding window).
    */
   get(key: string): StoreResult | undefined {
     const entry = this.entries.get(key)
     if (!entry || entry.reset <= Date.now()) {
       return undefined
     }
-    return { count: entry.count, reset: entry.reset }
+    // Return the logical reset time (internal - windowMs)
+    return { count: entry.count, reset: entry.reset - this.windowMs }
   }
 
   /**
