@@ -125,9 +125,12 @@ importers:
       '@nuxt/kit':
         specifier: ^3.17.4
         version: 3.21.0(magicast@0.5.1)
+      defu:
+        specifier: ^6.1.4
+        version: 6.1.4
     devDependencies:
       '@nuxt/schema':
-        specifier: ^3.17.4
+        specifier: ^3.21.0
         version: 3.21.0
       nuxt:
         specifier: ^3.17.4
