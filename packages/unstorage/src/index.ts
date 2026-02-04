@@ -111,7 +111,7 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
    */
   function getTtlSeconds(): number {
     // Add 10% buffer to ensure key doesn't expire before window ends
-    return Math.ceil((windowMs * 1.1) / 1000)
+    return Math.ceil((windowMs * 2 * 1.1) / 1000)
   }
 
   const store: RateLimitStore = {
@@ -123,7 +123,10 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
     },
 
     /**
-     * Increment counter for key
+     * Increment counter for key.
+     *
+     * Internally stores entries with 2x windowMs for sliding window support.
+     * Returns the logical 1x reset time to callers.
      */
     async increment(key: string): Promise<StoreResult> {
       const fullKey = getKey(key)
@@ -141,20 +144,23 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
         await storage.setItem(fullKey, updated, {
           ttl: getTtlSeconds(),
         })
-        return { count: updated.count, reset: updated.reset }
+        return { count: updated.count, reset: updated.reset - windowMs }
       }
 
-      // Create new entry
-      const reset = now + windowMs
-      const entry: StoredEntry = { count: 1, reset }
+      // Create new entry (store with 2x windowMs so sliding window can read previous window)
+      const internalReset = now + windowMs * 2
+      const externalReset = now + windowMs
+      const entry: StoredEntry = { count: 1, reset: internalReset }
       await storage.setItem(fullKey, entry, {
         ttl: getTtlSeconds(),
       })
-      return { count: 1, reset }
+      return { count: 1, reset: externalReset }
     },
 
     /**
-     * Get current state for key
+     * Get current state for key.
+     *
+     * Returns the logical 1x reset time (internal stores 2x for sliding window).
      */
     async get(key: string): Promise<StoreResult | undefined> {
       const fullKey = getKey(key)
@@ -164,7 +170,7 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
         return undefined
       }
 
-      return { count: entry.count, reset: entry.reset }
+      return { count: entry.count, reset: entry.reset - windowMs }
     },
 
     /**

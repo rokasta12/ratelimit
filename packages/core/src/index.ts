@@ -21,12 +21,17 @@ export type RateLimitInfo = {
 }
 
 /**
- * Result from store increment operation
+ * Result from store increment/get operations.
+ *
+ * **Important for custom store implementors:** The `reset` value returned to
+ * callers must be the *logical* (1x windowMs) reset time, even though stores
+ * must internally persist entries with 2x windowMs for sliding window support.
+ * See {@link RateLimitStore.increment} for details.
  */
 export type StoreResult = {
   /** Current request count in window */
   count: number
-  /** When the window resets (Unix timestamp ms) */
+  /** When the window resets (Unix timestamp ms). Must be the logical 1x reset time. */
   reset: number
 }
 
@@ -40,6 +45,12 @@ export type Algorithm = 'fixed-window' | 'sliding-window'
  *
  * Implement this interface to create custom storage backends.
  * The store is responsible for tracking request counts per key.
+ *
+ * **2x windowMs contract:** Stores must internally persist entries with a TTL/reset
+ * of `2 * windowMs` so the sliding window algorithm can read the previous window's
+ * count. However, the `StoreResult.reset` value returned to callers must be the
+ * *logical* 1x reset time (`now + windowMs` for new entries, `internalReset - windowMs`
+ * for existing entries). See {@link MemoryStore} for the canonical implementation.
  */
 export type RateLimitStore = {
   /**
@@ -51,6 +62,12 @@ export type RateLimitStore = {
   /**
    * Increment counter for key and return current state.
    * This is the main operation - it should atomically increment and return.
+   *
+   * **2x windowMs contract:** New entries must be stored with an internal reset of
+   * `now + windowMs * 2`, but the returned `StoreResult.reset` must be `now + windowMs`.
+   * Existing entries return `internalReset - windowMs`. This ensures the sliding window
+   * algorithm can read the previous window's count after the logical window expires.
+   *
    * @param key - Unique identifier for the rate limit bucket
    */
   increment: (key: string) => StoreResult | Promise<StoreResult>
@@ -77,6 +94,10 @@ export type RateLimitStore = {
    * Get current state for key.
    * Returns undefined if key doesn't exist or has expired.
    * Required for sliding window algorithm.
+   *
+   * **2x windowMs contract:** The returned `StoreResult.reset` must be the logical
+   * 1x reset time (`internalReset - windowMs`), matching what `increment()` returns.
+   *
    * @param key - Unique identifier for the rate limit bucket
    */
   get?: (key: string) => Promise<StoreResult | undefined> | StoreResult | undefined
@@ -343,10 +364,11 @@ async function checkFixedWindow(
   const windowStart = Math.floor(now / windowMs) * windowMs
   const windowKey = `${key}:${windowStart}`
 
-  const { count, reset } = await store.increment(windowKey)
+  const { count } = await store.increment(windowKey)
 
   const remaining = Math.max(0, limit - count)
   const allowed = count <= limit
+  const reset = windowStart + windowMs
 
   return {
     allowed,
