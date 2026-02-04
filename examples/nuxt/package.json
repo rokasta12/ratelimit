@@ -1,0 +1,21 @@
+{
+  "name": "@jfungus/example-nuxt",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Nuxt rate limiting example",
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "node .output/server/index.mjs",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "@jfungus/ratelimit-nuxt": "workspace:*",
+    "@jfungus/ratelimit": "workspace:*",
+    "nuxt": "^3.17.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@jfungus/example-hono",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hono rate limiting example",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsup src/index.ts --format esm --dts"
+  },
+  "dependencies": {
+    "@jfungus/ratelimit-hono": "workspace:*",
+    "hono": "^4.7.10",
+    "@hono/node-server": "^1.13.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2"
+  }
+}
