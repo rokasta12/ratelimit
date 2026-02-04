@@ -133,6 +133,7 @@ declare global {
 // ============================================================================
 
 let defaultStore: MemoryStore | undefined
+let unknownIPWarned = false
 
 /**
  * Shutdown the default memory store.
@@ -174,7 +175,18 @@ export function getClientIP(req: Request): string {
     return xff.split(',')[0].trim()
   }
 
-  return req.socket?.remoteAddress || 'unknown'
+  const remoteAddress = req.socket?.remoteAddress
+  if (remoteAddress) {
+    return remoteAddress
+  }
+
+  if (!unknownIPWarned) {
+    unknownIPWarned = true
+    console.warn(
+      '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
+    )
+  }
+  return 'unknown'
 }
 
 // ============================================================================

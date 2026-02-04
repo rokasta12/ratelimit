@@ -247,6 +247,7 @@ declare module 'hono' {
 // ============================================================================
 
 let defaultStore: MemoryStore | undefined
+let unknownIPWarned = false
 
 /**
  * Shutdown the default memory store.
@@ -435,6 +436,12 @@ export function getClientIP(c: Context): string {
     return xff.split(',')[0].trim()
   }
 
+  if (!unknownIPWarned) {
+    unknownIPWarned = true
+    console.warn(
+      '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
+    )
+  }
   return 'unknown'
 }
 
