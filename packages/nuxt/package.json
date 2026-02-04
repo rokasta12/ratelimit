@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@jfungus/ratelimit": "workspace:*",
+    "@jfungus/ratelimit-unstorage": "workspace:*",
     "@nuxt/kit": "^3.17.4",
     "defu": "^6.1.4"
   },

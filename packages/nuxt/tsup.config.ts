@@ -1,11 +1,9 @@
-import { type Options, defineConfig } from 'tsup'
+import { defineConfig } from 'tsup'
 
-const config: Options = {
+export default defineConfig({
   entry: ['src/module.ts'],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
   external: ['@nuxt/kit', '@nuxt/schema', 'nuxt', '#imports', 'h3'],
-}
-
-export default defineConfig(config)
+})

@@ -4,6 +4,7 @@
  */
 
 import { MemoryStore, checkRateLimit } from '@jfungus/ratelimit'
+import { createUnstorageStore } from '@jfungus/ratelimit-unstorage'
 import { createError, defineEventHandler, getHeader, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig, useStorage } from '#imports'
 
@@ -13,6 +14,8 @@ import buildConfig from '#ratelimit-config'
 
 /** @type {Map<string, import('@jfungus/ratelimit').RateLimitStore>} */
 const stores = new Map()
+
+let unknownIPWarned = false
 
 /**
  * Get or create a store for the given storage configuration
@@ -28,7 +31,6 @@ function getStore(cfg, windowMs) {
     return stores.get(storeKey)
   }
 
-  // For memory storage, use MemoryStore
   if (storageKey === 'memory') {
     const store = new MemoryStore()
     store.init(windowMs)
@@ -36,147 +38,11 @@ function getStore(cfg, windowMs) {
     return store
   }
 
-  // For other storage types, use Nuxt's useStorage with a proper adapter
-  const store = createNuxtStorageStore(storageKey, windowMs)
-  stores.set(storeKey, store)
-  return store
-}
-
-/**
- * Create a rate limit store using Nuxt's useStorage.
- * @param {string} storageKey
- * @param {number} initialWindowMs
- * @returns {import('@jfungus/ratelimit').RateLimitStore}
- */
-function createNuxtStorageStore(storageKey, initialWindowMs) {
+  // Use the canonical unstorage adapter instead of inline duplicate
   const storage = useStorage(storageKey)
-  const prefix = 'ratelimit:'
-  let windowMs = initialWindowMs
-
-  /**
-   * Get the full key with prefix
-   * @param {string} key
-   * @returns {string}
-   */
-  function getKey(key) {
-    return `${prefix}${key}`
-  }
-
-  /**
-   * Calculate TTL in seconds (for drivers that support it)
-   * @returns {number}
-   */
-  function getTtlSeconds() {
-    // Add 10% buffer to ensure key doesn't expire before window ends
-    return Math.ceil((windowMs * 1.1) / 1000)
-  }
-
-  /** @type {import('@jfungus/ratelimit').RateLimitStore} */
-  const store = {
-    /**
-     * Initialize store with window duration
-     * @param {number} ms
-     */
-    init(ms) {
-      windowMs = ms
-    },
-
-    /**
-     * Increment counter for key and return current state.
-     * @param {string} key
-     * @returns {Promise<import('@jfungus/ratelimit').StoreResult>}
-     */
-    async increment(key) {
-      const fullKey = getKey(key)
-      const now = Date.now()
-
-      // Get existing entry
-      const existing = await storage.getItem(fullKey)
-
-      if (existing && existing.reset > now) {
-        // Increment existing entry
-        const updated = {
-          count: existing.count + 1,
-          reset: existing.reset,
-        }
-        await storage.setItem(fullKey, updated, {
-          ttl: getTtlSeconds(),
-        })
-        return { count: updated.count, reset: updated.reset }
-      }
-
-      // Create new entry
-      const reset = now + windowMs
-      const entry = { count: 1, reset }
-      await storage.setItem(fullKey, entry, {
-        ttl: getTtlSeconds(),
-      })
-      return { count: 1, reset }
-    },
-
-    /**
-     * Get current state for key
-     * @param {string} key
-     * @returns {Promise<import('@jfungus/ratelimit').StoreResult | undefined>}
-     */
-    async get(key) {
-      const fullKey = getKey(key)
-      const entry = await storage.getItem(fullKey)
-
-      if (!entry || entry.reset <= Date.now()) {
-        return undefined
-      }
-
-      return { count: entry.count, reset: entry.reset }
-    },
-
-    /**
-     * Decrement counter for key
-     * @param {string} key
-     * @returns {Promise<void>}
-     */
-    async decrement(key) {
-      const fullKey = getKey(key)
-      const entry = await storage.getItem(fullKey)
-
-      if (entry && entry.count > 0) {
-        const updated = {
-          count: entry.count - 1,
-          reset: entry.reset,
-        }
-        await storage.setItem(fullKey, updated, {
-          ttl: getTtlSeconds(),
-        })
-      }
-    },
-
-    /**
-     * Reset a specific key.
-     * @param {string} key
-     * @returns {Promise<void>}
-     */
-    async resetKey(key) {
-      const fullKey = getKey(key)
-      await storage.removeItem(fullKey)
-    },
-
-    /**
-     * Reset all rate limit keys
-     * @returns {Promise<void>}
-     */
-    async resetAll() {
-      const keys = await storage.getKeys(prefix)
-      await Promise.all(keys.map((k) => storage.removeItem(k)))
-    },
-
-    /**
-     * Shutdown - no-op for Nuxt storage (handled by Nuxt)
-     */
-    shutdown() {
-      // Storage cleanup is handled by Nuxt
-    },
-  }
-
+  const store = createUnstorageStore({ storage })
+  store.init(windowMs)
+  stores.set(storeKey, store)
   return store
 }
 
@@ -188,8 +54,18 @@ function createNuxtStorageStore(storageKey, initialWindowMs) {
  * @returns {string}
  */
 function generateKey(event, keyGenerator, routePrefix) {
-  const ip =
-    getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() || getRequestIP(event) || 'unknown'
+  let ip =
+    getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() || getRequestIP(event)
+
+  if (!ip) {
+    if (!unknownIPWarned) {
+      unknownIPWarned = true
+      console.warn(
+        '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
+      )
+    }
+    ip = 'unknown'
+  }
 
   let key = ip
 
