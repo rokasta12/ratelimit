@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Framework-agnostic rate limiting library with sliding window algorithm",
   "author": "rokasta12",
   "license": "MIT",

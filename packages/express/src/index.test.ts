@@ -109,7 +109,7 @@ describe('@jfungus/ratelimit-express', () => {
       expect(onRateLimited).toHaveBeenCalled()
     })
 
-    it('supports standard headers', async () => {
+    it('supports standard headers (legacy boolean)', async () => {
       const app = express()
       app.use(
         rateLimiter({
@@ -128,6 +128,71 @@ describe('@jfungus/ratelimit-express', () => {
       expect(res.headers['x-ratelimit-limit']).toBeUndefined()
     })
 
+    describe('header formats', () => {
+      it('sets legacy headers by default', async () => {
+        const app = express()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000 }))
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res = await request(app).get('/')
+
+        expect(res.headers['x-ratelimit-limit']).toBe('10')
+        expect(res.headers['x-ratelimit-remaining']).toBe('9')
+        expect(res.headers['x-ratelimit-reset']).toBeDefined()
+      })
+
+      it('sets draft-6 headers', async () => {
+        const app = express()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000, headers: 'draft-6' }))
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res = await request(app).get('/')
+
+        expect(res.headers['ratelimit-policy']).toBe('10;w=60')
+        expect(res.headers['ratelimit-limit']).toBe('10')
+        expect(res.headers['ratelimit-remaining']).toBe('9')
+        expect(res.headers['ratelimit-reset']).toBeDefined()
+        expect(res.headers['x-ratelimit-limit']).toBeUndefined()
+      })
+
+      it('sets draft-7 headers', async () => {
+        const app = express()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000, headers: 'draft-7' }))
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res = await request(app).get('/')
+
+        expect(res.headers['ratelimit-policy']).toBe('10;w=60')
+        expect(res.headers['ratelimit']).toMatch(/limit=10, remaining=9, reset=\d+/)
+        expect(res.headers['x-ratelimit-limit']).toBeUndefined()
+      })
+
+      it('sets standard (IETF) headers', async () => {
+        const app = express()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000, headers: 'standard' }))
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res = await request(app).get('/')
+
+        expect(res.headers['ratelimit-policy']).toMatch(/"default";q=10;w=60/)
+        expect(res.headers['ratelimit']).toMatch(/"default";r=9;t=\d+/)
+        expect(res.headers['x-ratelimit-limit']).toBeUndefined()
+      })
+
+      it('disables headers when false', async () => {
+        const app = express()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000, headers: false }))
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res = await request(app).get('/')
+
+        expect(res.headers['x-ratelimit-limit']).toBeUndefined()
+        expect(res.headers['ratelimit-limit']).toBeUndefined()
+        expect(res.headers['ratelimit-policy']).toBeUndefined()
+        expect(res.headers['ratelimit']).toBeUndefined()
+      })
+    })
+
     it('sets request.rateLimit', async () => {
       const app = express()
       app.use(rateLimiter({ limit: 10, windowMs: 60_000 }))
@@ -141,12 +206,78 @@ describe('@jfungus/ratelimit-express', () => {
       expect(res.body.remaining).toBe(9)
     })
 
+    describe('configure()', () => {
+      it('changes limit at runtime', async () => {
+        const app = express()
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        app.use(limiter)
+        app.get('/', (_req, res) => res.send('OK'))
+
+        const res1 = await request(app).get('/')
+        expect(res1.headers['x-ratelimit-limit']).toBe('10')
+
+        limiter.configure({ limit: 50 })
+
+        const res2 = await request(app).get('/')
+        expect(res2.headers['x-ratelimit-limit']).toBe('50')
+      })
+
+      it('throws on windowMs change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
+          "Cannot change 'windowMs' at runtime",
+        )
+      })
+
+      it('throws on algorithm change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
+          "Cannot change 'algorithm' at runtime",
+        )
+      })
+
+      it('throws on store change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
+          "Cannot change 'store' at runtime",
+        )
+      })
+
+      it('throws on invalid limit value', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => limiter.configure({ limit: 0 })).toThrow('limit must be a positive number')
+        expect(() => limiter.configure({ limit: -5 })).toThrow('limit must be a positive number')
+      })
+    })
+
     it('throws on invalid limit', () => {
       expect(() => rateLimiter({ limit: 0 })).toThrow('limit must be a positive number')
     })
 
     it('throws on invalid windowMs', () => {
       expect(() => rateLimiter({ windowMs: 0 })).toThrow('windowMs must be a positive number')
+    })
+
+    it('supports dynamic limit function', async () => {
+      const app = express()
+      app.use(
+        rateLimiter({
+          limit: (req) => (req.get('x-premium') === 'true' ? 100 : 2),
+          windowMs: 60_000,
+        }),
+      )
+      app.get('/', (_req, res) => res.send('OK'))
+
+      // Regular user: limit 2
+      await request(app).get('/')
+      await request(app).get('/')
+      const regularRes = await request(app).get('/')
+      expect(regularRes.status).toBe(429)
+
+      // Premium user: limit 100
+      const premiumRes = await request(app).get('/').set('x-premium', 'true')
+      expect(premiumRes.status).toBe(200)
+      expect(premiumRes.headers['x-ratelimit-limit']).toBe('100')
     })
 
     it('supports custom handler', async () => {

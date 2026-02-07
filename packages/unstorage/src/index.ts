@@ -60,6 +60,16 @@ export type UnstorageStoreOptions = {
  * - `fs` - File system
  * - And many more...
  *
+ * **⚠️ Multi-instance warning:** The `increment()` operation uses a non-atomic
+ * read-then-write pattern (`getItem` → `setItem`). In multi-instance deployments
+ * (multiple servers sharing the same storage backend), concurrent requests can
+ * cause lost updates — two requests may read the same count and both write
+ * `count + 1` instead of `count + 2`. This allows more requests through than
+ * the configured limit. For single-instance deployments or low-concurrency
+ * scenarios, this is not a concern. For high-concurrency distributed setups,
+ * consider using the in-memory `MemoryStore` per-instance or a storage driver
+ * that supports atomic operations natively.
+ *
  * @param options - Store configuration
  * @returns Rate limit store instance
  *
@@ -107,11 +117,22 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
   }
 
   /**
-   * Calculate TTL in seconds (for drivers that support it)
+   * Calculate TTL in seconds for new entries (for drivers that support it).
+   * Uses 2x windowMs + 10% buffer to ensure key doesn't expire before window ends.
    */
-  function getTtlSeconds(): number {
-    // Add 10% buffer to ensure key doesn't expire before window ends
+  function getNewEntryTtlSeconds(): number {
     return Math.ceil((windowMs * 2 * 1.1) / 1000)
+  }
+
+  /**
+   * Calculate remaining TTL in seconds for an existing entry.
+   * Uses the entry's actual reset time instead of recalculating from scratch,
+   * avoiding unnecessarily extending the key's lifetime in storage.
+   */
+  function getRemainingTtlSeconds(reset: number): number {
+    const remainingMs = reset - Date.now()
+    // 10% buffer so the key outlives the logical window
+    return Math.max(1, Math.ceil((remainingMs * 1.1) / 1000))
   }
 
   const store: RateLimitStore = {
@@ -127,8 +148,12 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
      *
      * Internally stores entries with 2x windowMs for sliding window support.
      * Returns the logical 1x reset time to callers.
+     *
+     * **Note:** This is a non-atomic read-then-write operation. Under high
+     * concurrency with shared storage, lost updates are possible.
+     * See the module-level warning for details.
      */
-    async increment(key: string): Promise<StoreResult> {
+    async increment(key: string, cost = 1): Promise<StoreResult> {
       const fullKey = getKey(key)
       const now = Date.now()
 
@@ -136,13 +161,13 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
       const existing = await storage.getItem<StoredEntry>(fullKey)
 
       if (existing && existing.reset > now) {
-        // Increment existing entry
+        // Increment existing entry — use remaining TTL instead of full TTL
         const updated: StoredEntry = {
-          count: existing.count + 1,
+          count: existing.count + cost,
           reset: existing.reset,
         }
         await storage.setItem(fullKey, updated, {
-          ttl: getTtlSeconds(),
+          ttl: getRemainingTtlSeconds(existing.reset),
         })
         return { count: updated.count, reset: updated.reset - windowMs }
       }
@@ -150,9 +175,9 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
       // Create new entry (store with 2x windowMs so sliding window can read previous window)
       const internalReset = now + windowMs * 2
       const externalReset = now + windowMs
-      const entry: StoredEntry = { count: 1, reset: internalReset }
+      const entry: StoredEntry = { count: cost, reset: internalReset }
       await storage.setItem(fullKey, entry, {
-        ttl: getTtlSeconds(),
+        ttl: getNewEntryTtlSeconds(),
       })
       return { count: 1, reset: externalReset }
     },
@@ -186,7 +211,7 @@ export function createUnstorageStore(options: UnstorageStoreOptions): RateLimitS
           reset: entry.reset,
         }
         await storage.setItem(fullKey, updated, {
-          ttl: getTtlSeconds(),
+          ttl: getRemainingTtlSeconds(entry.reset),
         })
       }
     },

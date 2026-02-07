@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit-nuxt",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Nuxt module for @jfungus/ratelimit - rate limiting with Nuxt's useStorage",
   "author": "rokasta12",
   "license": "MIT",

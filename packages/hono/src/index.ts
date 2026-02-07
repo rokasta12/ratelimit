@@ -10,6 +10,7 @@ import {
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
+  maskIPv6,
 } from '@jfungus/ratelimit'
 import type { Context, Env, MiddlewareHandler } from 'hono'
 
@@ -22,8 +23,10 @@ export {
   type CheckRateLimitOptions,
   type CheckRateLimitResult,
   type StoreResult,
+  type StoreCheckResult,
   checkRateLimit,
   createRateLimiter,
+  maskIPv6,
 } from '@jfungus/ratelimit'
 
 // ============================================================================
@@ -73,6 +76,26 @@ export type HeadersFormat =
   | 'draft-7' // IETF draft-07: combined RateLimit header
   | 'standard' // IETF draft-08+: structured field format (current)
   | false // Disable headers
+
+/**
+ * Options that can be safely changed at runtime via `configure()`.
+ *
+ * Excludes `windowMs`, `algorithm`, and `store` because changing them
+ * would break epoch-aligned keys, misinterpret existing entries, or
+ * abandon all state.
+ */
+export type RateLimitRuntimeOptions<E extends Env = Env> = Omit<
+  RateLimitOptions<E>,
+  'windowMs' | 'algorithm' | 'store'
+>
+
+/**
+ * Rate limiter middleware with runtime configuration support.
+ */
+export type RateLimiterMiddleware<E extends Env = Env> = MiddlewareHandler<E> & {
+  /** Safely update rate limiter options at runtime. Throws if unsafe keys are provided. */
+  configure: (updates: Partial<RateLimitRuntimeOptions<E>>) => void
+}
 
 /**
  * Store access interface exposed in context
@@ -418,31 +441,28 @@ function buildRateLimitHeaders(
  *
  * @warning These headers can be spoofed. Only trust them behind a reverse proxy.
  */
-export function getClientIP(c: Context): string {
+export function getClientIP(c: Context, ipv6Subnet: number | false = 56): string {
   // Platform-specific headers (most reliable)
-  const cfIP = c.req.header('cf-connecting-ip')
-  if (cfIP) {
-    return cfIP
+  let ip: string | undefined
+
+  ip = c.req.header('cf-connecting-ip')
+  if (!ip) ip = c.req.header('x-real-ip')
+  if (!ip) {
+    const xff = c.req.header('x-forwarded-for')
+    if (xff) ip = xff.split(',')[0].trim()
   }
 
-  const xRealIP = c.req.header('x-real-ip')
-  if (xRealIP) {
-    return xRealIP
+  if (!ip) {
+    if (!unknownIPWarned) {
+      unknownIPWarned = true
+      console.warn(
+        '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
+      )
+    }
+    return 'unknown'
   }
 
-  // X-Forwarded-For - take first IP
-  const xff = c.req.header('x-forwarded-for')
-  if (xff) {
-    return xff.split(',')[0].trim()
-  }
-
-  if (!unknownIPWarned) {
-    unknownIPWarned = true
-    console.warn(
-      '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
-    )
-  }
-  return 'unknown'
+  return maskIPv6(ip, ipv6Subnet)
 }
 
 // ============================================================================
@@ -496,7 +516,7 @@ function createDefaultResponse(
  */
 export const rateLimiter = <E extends Env = Env>(
   options?: RateLimitOptions<E>,
-): MiddlewareHandler<E> => {
+): RateLimiterMiddleware<E> => {
   // Merge with defaults
   const opts = {
     limit: 100 as number | ((c: Context<E>) => number | Promise<number>),
@@ -552,7 +572,9 @@ export const rateLimiter = <E extends Env = Env>(
     return opts.onStoreError === 'allow'
   }
 
-  return async function rateLimiterMiddleware(c, next) {
+  const unsafeKeys = ['windowMs', 'algorithm', 'store'] as const
+
+  const middleware = async function rateLimiterMiddleware(c: Context<E>, next: () => Promise<void>) {
     // Initialize store on first request (with proper locking)
     if (!initPromise && store.init) {
       const result = store.init(opts.windowMs)
@@ -563,6 +585,8 @@ export const rateLimiter = <E extends Env = Env>(
       try {
         await initPromise
       } catch (error) {
+        // Reset to allow retry on next request
+        initPromise = null
         const shouldAllow = await handleStoreError(
           error instanceof Error ? error : new Error(String(error)),
           c,
@@ -677,7 +701,26 @@ export const rateLimiter = <E extends Env = Env>(
         }
       }
     }
+  } as RateLimiterMiddleware<E>
+
+  middleware.configure = (updates: Partial<RateLimitRuntimeOptions<E>>) => {
+    for (const key of unsafeKeys) {
+      if (key in updates) {
+        throw new Error(
+          `[@jfungus/ratelimit-hono] Cannot change '${key}' at runtime. This would break existing rate limit state.`,
+        )
+      }
+    }
+    // Validate limit if provided
+    if ('limit' in updates && typeof updates.limit === 'number' && updates.limit <= 0) {
+      throw new Error(
+        `[@jfungus/ratelimit-hono] limit must be a positive number, got: ${updates.limit}`,
+      )
+    }
+    Object.assign(opts, updates)
   }
+
+  return middleware
 }
 
 // ============================================================================

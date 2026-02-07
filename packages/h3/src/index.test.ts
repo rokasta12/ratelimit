@@ -184,6 +184,120 @@ describe('@jfungus/ratelimit-h3', () => {
       expect(onRateLimited).toHaveBeenCalled()
     })
 
+    describe('header formats', () => {
+      it('sets legacy headers by default', async () => {
+        const app = createApp()
+        app.use(rateLimiter({ limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator }))
+        app.use(eventHandler(() => 'OK'))
+
+        const res = await makeRequest(app)
+        expect(res.headers.get('x-ratelimit-limit')).toBe('10')
+        expect(res.headers.get('x-ratelimit-remaining')).toBe('9')
+      })
+
+      it('sets draft-6 headers', async () => {
+        const app = createApp()
+        app.use(rateLimiter({
+          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
+          headers: 'draft-6',
+        }))
+        app.use(eventHandler(() => 'OK'))
+
+        const res = await makeRequest(app)
+        expect(res.headers.get('ratelimit-policy')).toBe('10;w=60')
+        expect(res.headers.get('ratelimit-limit')).toBe('10')
+        expect(res.headers.get('ratelimit-remaining')).toBe('9')
+      })
+
+      it('sets draft-7 headers', async () => {
+        const app = createApp()
+        app.use(rateLimiter({
+          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
+          headers: 'draft-7',
+        }))
+        app.use(eventHandler(() => 'OK'))
+
+        const res = await makeRequest(app)
+        expect(res.headers.get('ratelimit-policy')).toBe('10;w=60')
+        expect(res.headers.get('ratelimit')).toMatch(/limit=10, remaining=9, reset=\d+/)
+      })
+
+      it('sets standard (IETF) headers', async () => {
+        const app = createApp()
+        app.use(rateLimiter({
+          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
+          headers: 'standard', identifier: 'api',
+        }))
+        app.use(eventHandler(() => 'OK'))
+
+        const res = await makeRequest(app)
+        expect(res.headers.get('ratelimit-policy')).toBe('"api";q=10;w=60')
+        expect(res.headers.get('ratelimit')).toMatch(/"api";r=9;t=\d+/)
+      })
+
+      it('disables headers when false', async () => {
+        const app = createApp()
+        app.use(rateLimiter({
+          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
+          headers: false,
+        }))
+        app.use(eventHandler(() => 'OK'))
+
+        const res = await makeRequest(app)
+        expect(res.headers.get('x-ratelimit-limit')).toBeNull()
+        expect(res.headers.get('ratelimit')).toBeNull()
+      })
+    })
+
+    describe('configure()', () => {
+      it('changes limit at runtime', async () => {
+        const limiter = rateLimiter({
+          limit: 10,
+          windowMs: 60_000,
+          keyGenerator: testKeyGenerator,
+        })
+
+        const app = createApp()
+        app.use(limiter)
+        app.use(eventHandler(() => 'OK'))
+
+        const res1 = await makeRequest(app)
+        expect(res1.headers.get('x-ratelimit-limit')).toBe('10')
+
+        limiter.configure({ limit: 50 })
+
+        const res2 = await makeRequest(app)
+        expect(res2.headers.get('x-ratelimit-limit')).toBe('50')
+      })
+
+      it('throws on windowMs change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
+          "Cannot change 'windowMs' at runtime",
+        )
+      })
+
+      it('throws on algorithm change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
+          "Cannot change 'algorithm' at runtime",
+        )
+      })
+
+      it('throws on store change', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
+          "Cannot change 'store' at runtime",
+        )
+      })
+
+      it('throws on invalid limit value', () => {
+        const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+        expect(() => limiter.configure({ limit: 0 })).toThrow('limit must be a positive number')
+        expect(() => limiter.configure({ limit: -5 })).toThrow('limit must be a positive number')
+      })
+    })
+
     it('throws on invalid limit', () => {
       expect(() => rateLimiter({ limit: 0 })).toThrow('limit must be a positive number')
     })

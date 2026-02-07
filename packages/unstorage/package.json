@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit-unstorage",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "unstorage adapter for @jfungus/ratelimit - supports Redis, Cloudflare KV, Vercel KV, and more",
   "author": "rokasta12",
   "license": "MIT",

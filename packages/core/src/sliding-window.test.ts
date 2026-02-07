@@ -424,7 +424,7 @@ describe('Sliding Window Algorithm', () => {
         await checkRateLimit({ store: shortStore, key: 'short', limit, windowMs: shortWindowMs })
       }
 
-      // 6th request is blocked but still counted
+      // 6th request is blocked (with check-before-write, NOT counted)
       const blocked = await checkRateLimit({
         store: shortStore,
         key: 'short',
@@ -436,9 +436,9 @@ describe('Sliding Window Algorithm', () => {
       // Move to 50% into next window (weight = 0.5)
       vi.setSystemTime(windowStart + shortWindowMs + 50)
 
-      // Previous window has 6 requests (5 allowed + 1 blocked)
-      // Weight = 0.5, estimated = floor(6 * 0.5) + 1 = 3 + 1 = 4
-      // Remaining = 5 - 4 = 1
+      // Previous window has 5 requests (blocked request not counted)
+      // Weight = 0.5, estimated = floor(5 * 0.5) + 1 = 2 + 1 = 3
+      // Remaining = 5 - 3 = 2
       const allowed = await checkRateLimit({
         store: shortStore,
         key: 'short',
@@ -446,7 +446,7 @@ describe('Sliding Window Algorithm', () => {
         windowMs: shortWindowMs,
       })
       expect(allowed.allowed).toBe(true)
-      expect(allowed.info.remaining).toBe(1)
+      expect(allowed.info.remaining).toBe(2)
 
       shortStore.shutdown()
     })
@@ -723,7 +723,7 @@ describe('Sliding Window Algorithm', () => {
         })
       }
 
-      // 6th attempt should be blocked (but still counted)
+      // 6th attempt should be blocked (with check-before-write, NOT counted)
       const blocked = await checkRateLimit({
         store: loginStore,
         key: 'login:user@example.com',
@@ -735,9 +735,9 @@ describe('Sliding Window Algorithm', () => {
       // Move to 50% into NEXT window for sliding window to take effect
       vi.setSystemTime(windowStart + loginWindowMs + loginWindowMs / 2)
 
-      // Previous window has 6 requests (5 allowed + 1 blocked)
-      // Weight = 0.5, estimated = floor(6 * 0.5) + 1 = 3 + 1 = 4
-      // Remaining = 5 - 4 = 1
+      // Previous window has 5 requests (blocked request not counted)
+      // Weight = 0.5, estimated = floor(5 * 0.5) + 1 = 2 + 1 = 3
+      // Remaining = 5 - 3 = 2
       const partial = await checkRateLimit({
         store: loginStore,
         key: 'login:user@example.com',
@@ -745,7 +745,7 @@ describe('Sliding Window Algorithm', () => {
         windowMs: loginWindowMs,
       })
       expect(partial.allowed).toBe(true)
-      expect(partial.info.remaining).toBe(1)
+      expect(partial.info.remaining).toBe(2)
 
       loginStore.shutdown()
     })

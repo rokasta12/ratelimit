@@ -1,6 +1,6 @@
 {
   "name": "@jfungus/ratelimit-h3",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "H3/Nitro middleware for @jfungus/ratelimit",
   "author": "rokasta12",
   "license": "MIT",

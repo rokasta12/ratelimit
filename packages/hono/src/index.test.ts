@@ -425,6 +425,67 @@ describe('@jfungus/ratelimit-hono', () => {
     })
   })
 
+  describe('configure()', () => {
+    it('changes limit at runtime', async () => {
+      const app = new Hono()
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+      app.use(limiter)
+      app.get('/', (c) => c.text('OK'))
+
+      const res1 = await app.request('/')
+      expect(res1.headers.get('X-RateLimit-Limit')).toBe('10')
+
+      limiter.configure({ limit: 50 })
+
+      const res2 = await app.request('/')
+      expect(res2.headers.get('X-RateLimit-Limit')).toBe('50')
+    })
+
+    it('changes headers format at runtime', async () => {
+      const app = new Hono()
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000, headers: 'legacy' })
+      app.use(limiter)
+      app.get('/', (c) => c.text('OK'))
+
+      const res1 = await app.request('/')
+      expect(res1.headers.get('X-RateLimit-Limit')).toBe('10')
+      expect(res1.headers.get('RateLimit-Policy')).toBeNull()
+
+      limiter.configure({ headers: 'draft-6' })
+
+      const res2 = await app.request('/')
+      expect(res2.headers.get('X-RateLimit-Limit')).toBeNull()
+      expect(res2.headers.get('RateLimit-Policy')).toBe('10;w=60')
+    })
+
+    it('throws on windowMs change', () => {
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+      expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
+        "Cannot change 'windowMs' at runtime",
+      )
+    })
+
+    it('throws on algorithm change', () => {
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+      expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
+        "Cannot change 'algorithm' at runtime",
+      )
+    })
+
+    it('throws on store change', () => {
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+      expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
+        "Cannot change 'store' at runtime",
+      )
+    })
+
+    it('throws on invalid limit value', () => {
+      const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
+      expect(() => limiter.configure({ limit: 0 })).toThrow('limit must be a positive number')
+      expect(() => limiter.configure({ limit: -5 })).toThrow('limit must be a positive number')
+    })
+  })
+
   describe('cloudflareRateLimiter', () => {
     it('allows requests when limit succeeds', async () => {
       const mockBinding = {

@@ -6,7 +6,9 @@ Research compiled from: express-rate-limit, rate-limiter-flexible, @upstash/rate
 
 ## P0 - Correctness Issues
 
-### 1. Check-before-write in sliding window
+### 1. ~~Check-before-write in sliding window~~ ✅ DONE
+
+**Status: Fixed.** Added optional `checkAndIncrement` method to the `RateLimitStore` interface. MemoryStore implements it atomically (inherently safe in single-threaded JS). The core algorithm uses `checkAndIncrement` when available, falling back to the legacy increment-first approach for stores without it. Rejected requests no longer inflate the counter, preventing legitimate traffic from being blocked sooner than expected during sustained attacks.
 
 **Problem:** Currently `store.increment(currentKey)` runs before checking if the limit is exceeded. This means rejected requests still consume a token, inflating the counter. Under sustained attack, legitimate requests get blocked sooner than they should because rejected requests are counted.
 
@@ -51,7 +53,9 @@ Integration tests added proving sliding window weighting works end-to-end with u
 
 ## P1 - Production Readiness
 
-### 3. Two-Map rotation MemoryStore (from express-rate-limit)
+### 3. ~~Two-Map rotation MemoryStore (from express-rate-limit)~~ ✅ DONE
+
+**Status: Fixed.** Replaced O(n) cleanup sweep with O(1) two-map rotation pattern. `previous` and `current` maps rotate every `2*windowMs`. On access, live entries in `previous` are promoted to `current`; expired entries are discarded. Old `previous` map is garbage-collected by the runtime without per-entry iteration. All existing tests pass.
 
 **Problem:** Current cleanup uses `setInterval` that iterates ALL entries in the map to find and delete expired ones. This is O(n) per cleanup cycle and gets worse as more keys are tracked.
 
@@ -100,7 +104,9 @@ On access (`getClient`):
 
 ---
 
-### 4. Ephemeral in-memory block cache (from @upstash/ratelimit + rate-limiter-flexible)
+### 4. ~~Ephemeral in-memory block cache (from @upstash/ratelimit + rate-limiter-flexible)~~ ✅ DONE
+
+**Status: Fixed.** Added opt-in `blockCache` parameter to `checkRateLimit()`. Pass a `Map<string, number>` to cache blocked keys by reset timestamp. Subsequent requests for cached keys return rejection immediately without any store I/O. Cache entries auto-expire when checked after their reset time. Tests verify caching, expiry, and backward compatibility.
 
 **Problem:** Once a key is rate-limited, every subsequent request still hits the store (Redis, memory map, etc.) just to get rejected again. Under attack, this wastes store I/O on keys we already know are blocked.
 
@@ -158,7 +164,9 @@ class BlockedKeys {
 
 ---
 
-### 5. Fail-open / Insurance limiter (from rate-limiter-flexible + express-rate-limit)
+### 5. ~~Fail-open / Insurance limiter (from rate-limiter-flexible + express-rate-limit)~~ ✅ DONE
+
+**Status: Fixed.** Added optional `fallbackStore` parameter to `checkRateLimit()`. When the primary store throws an infrastructure error (not a rate limit rejection), the request is retried with the fallback store. Returns `reason: 'fallback'` to indicate failover occurred. Tests verify fallback works, enforces limits, and that primary is used when available.
 
 **Problem:** If the external store (Redis, database) goes down, all rate limit checks fail. The application either crashes or lets all traffic through uncontrolled.
 
@@ -196,7 +204,9 @@ throw error  // fail closed - 500 error
 
 ---
 
-### 6. Atomic sliding window for Redis/external stores
+### 6. ~~Atomic sliding window for Redis/external stores~~ ✅ DONE (MemoryStore)
+
+**Status: Fixed for MemoryStore.** Added `checkAndIncrement` method to `RateLimitStore` interface. MemoryStore implements it with atomic check-then-write (single-threaded JS guarantee). External stores (Redis, etc.) can implement this method using Lua scripts for true atomicity. Stores without `checkAndIncrement` fall back to the legacy approach automatically.
 
 **Problem:** The current sliding window does `store.get(previousKey)` and `store.increment(currentKey)` as two separate non-atomic operations. Between these two calls, another process could modify the data, leading to race conditions under high concurrency.
 
@@ -230,7 +240,9 @@ return {limit - (newValue + requestsInPreviousWindow), limit}
 
 ## P2 - Competitive Features
 
-### 7. Points/weight system (from rate-limiter-flexible)
+### 7. ~~Points/weight system (from rate-limiter-flexible)~~ ✅ DONE
+
+**Status: Fixed.** Added optional `cost` parameter (default: 1) to `checkRateLimit()`, `store.increment()`, and both algorithm functions. The `limit` now represents total points per window. MemoryStore and unstorage adapter both accept the cost parameter. Fully backward compatible — omitting `cost` gives the same behavior as before.
 
 **Problem:** Currently every request costs exactly 1 unit. There's no way to say "a file upload should count as 10 requests" or "a GET costs less than a POST."
 
@@ -261,7 +273,15 @@ The store just does `incrby(key, points)` instead of `incrby(key, 1)`. The limit
 
 ---
 
-### 8. Dynamic limits per request (from express-rate-limit)
+### 8. ~~Runtime config support (`configure()` method)~~ ✅ DONE
+
+**Status: Fixed.** Added a `.configure()` method to Hono, H3, and Express adapters for safe runtime config changes. Safe keys (`limit`, `dryRun`, `skip`, `handler`, `onRateLimited`, `onStoreError`, `keyGenerator`, `skipSuccessfulRequests`, `skipFailedRequests`, plus adapter-specific options) can be changed at any time. Unsafe keys (`windowMs`, `algorithm`, `store`) throw an error to prevent breaking existing rate limit state. Also fixed 3 bugs in the Nuxt middleware: routes cached forever on runtime config change, store leaks when windowMs changes, and build-time config always overriding runtime config.
+
+---
+
+### 9. ~~Dynamic limits per request (from express-rate-limit)~~ ✅ DONE
+
+**Status: Fixed.** All three framework adapters (Hono, H3, Express) accept `limit` as `number | ((req/c/event) => number | Promise<number>)`. The core `checkRateLimit()` already supports dynamic limits since callers pass `limit` per call. Tests added for Express dynamic limits.
 
 **Problem:** The `limit` value is currently static -- set once at configuration time. Real-world apps need different limits for different users (free vs premium), different endpoints, or different times of day.
 
@@ -286,7 +306,9 @@ Every config option accepts either a static value or an async function that rece
 
 ---
 
-### 9. Timeout with fail-open (from @upstash/ratelimit)
+### 10. ~~Timeout with fail-open (from @upstash/ratelimit)~~ ✅ DONE
+
+**Status: Fixed.** Added optional `timeout` parameter to `checkRateLimit()`. When specified, store calls are raced against a timer. If the store doesn't respond within the timeout, the request is allowed through (fail-open). Tests verify timeout behavior, normal fast response, and backward compatibility.
 
 **Problem:** In serverless/edge environments, a slow store response can cause request timeouts. Better to let the request through than to hang.
 
@@ -314,7 +336,9 @@ const result = await Promise.race(responseArray)
 
 ---
 
-### 10. `pending` promise pattern (from @upstash/ratelimit)
+### 11. ~~`pending` promise pattern (from @upstash/ratelimit)~~ ✅ DONE
+
+**Status: Fixed.** Added `pending: Promise<void>` to `CheckRateLimitResult`. Resolves immediately for now but provides infrastructure for serverless `waitUntil()` support without API changes. All return paths now include the pending promise.
 
 **Problem:** In edge/serverless platforms (Vercel Edge, Cloudflare Workers), background work after sending the response requires `context.waitUntil()`. Analytics, multi-region sync, and other housekeeping need this pattern.
 
@@ -343,7 +367,9 @@ Callers do: `context.waitUntil(result.pending)`
 
 ## P3 - Advanced Features
 
-### 11. Penalty/reward methods (from rate-limiter-flexible)
+### 12. ~~Penalty/reward methods (from rate-limiter-flexible)~~ ✅ DONE
+
+**Status: Fixed.** Added `penalty(key, points)` and `reward(key, points)` methods to the `RateLimiterInstance` returned by `createRateLimiter()`. Penalty silently consumes points; reward gives points back via `store.decrement()`. Neither triggers blocking or side effects. The `createRateLimiter` return type changed from a plain function to a `RateLimiterInstance` object with `.check()`, `.penalty()`, and `.reward()` methods.
 
 **Penalty:** Add points to a key without triggering block logic. Use case: WAF detects suspicious behavior, penalize the IP by consuming extra points.
 
@@ -364,7 +390,9 @@ Critical difference from `consume()`: these never trigger blocking, execEvenly d
 
 ---
 
-### 12. Ban escalation (from nuxt-api-shield)
+### 13. ~~Ban escalation (from nuxt-api-shield)~~ ✅ DONE
+
+**Status: Fixed.** Added optional `blockDuration` parameter to `checkRateLimit()`. When a key exceeds the limit and `blockDuration` is set, the key is banned for `blockDuration` ms (stored in `blockCache`). Subsequent requests are rejected via the cache without store I/O until the ban expires. Requires `blockCache` to be provided.
 
 **Two-tier system:** Normal rate limiting resets each window, but repeated violations trigger a longer ban period.
 
@@ -392,7 +420,7 @@ if (newCount > routeLimit.max) {
 
 ---
 
-### 13. IPv6 subnet masking (from express-rate-limit)
+### 14. IPv6 subnet masking (from express-rate-limit)
 
 **Problem:** IPv6 gives each device a /128 address within a /56 (or /48) allocation. An attacker can rotate through millions of IPv6 addresses within their allocation to bypass per-IP rate limits.
 
@@ -419,7 +447,9 @@ function ipKeyGenerator(ip: string, subnet: number = 56): string {
 
 ---
 
-### 14. Whitelist / blacklist bypass (from rate-limiter-flexible)
+### 15. ~~Whitelist / blacklist bypass (from rate-limiter-flexible)~~ ✅ DONE
+
+**Status: Fixed.** Added `whitelist` and `blacklist` options to `checkRateLimit()`. Both accept either `string[]` or `(key: string) => boolean`. Whitelisted keys get `allowed: true` with `remaining: limit`; blacklisted keys get `allowed: false` with `remaining: 0`. No store operations are performed for listed keys.
 
 **rate-limiter-flexible's `RLWrapperBlackAndWhite`:**
 ```ts
@@ -444,7 +474,9 @@ consume(key) {
 
 ---
 
-### 15. BurstyRateLimiter composition (from rate-limiter-flexible)
+### 16. ~~BurstyRateLimiter composition (from rate-limiter-flexible)~~ ✅ DONE
+
+**Status: Fixed.** Added `createBurstyRateLimiter()` function that composes two limiters. When the primary limiter rejects, the burst limiter absorbs overflow. The returned `info` reflects primary's state (burst pool hidden from callers). Tests verify normal operation, burst absorption, exhaustion, and cost support.
 
 **Compose two limiters for burst tolerance without sliding window complexity:**
 ```ts
@@ -460,7 +492,9 @@ When the primary limiter rejects, the burst limiter absorbs overflow. The burst 
 
 ---
 
-### 16. Response enrichment
+### 17. ~~Response enrichment~~ ✅ DONE
+
+**Status: Fixed.** Added `reason` field to `CheckRateLimitResult`: `'limit'` (normal check), `'cacheBlock'` (denied via ephemeral cache), `'timeout'` (allowed due to store timeout). Also exported the `RateLimitReason` type.
 
 **Add `reason` field to CheckRateLimitResult (from @upstash/ratelimit):**
 ```ts
@@ -475,9 +509,13 @@ This tells callers WHY a request was allowed/denied, enabling better observabili
 
 ---
 
-### 17. express-rate-limit: Validation-once-then-disable
+### 18. ~~express-rate-limit: Validation-once-then-disable~~ ✅ DONE
 
-Run config validations (trust proxy, store reuse, creation context) on the first request only, then disable them. Catches misconfigurations without per-request overhead.
+**Status: Fixed.** Implemented validation-once-then-disable pattern across all adapters:
+- **Express**: First-request validation for `trust proxy` configuration (warns if `req.ip` is undefined without trust proxy set)
+- **All adapters (Hono, H3, Express, Nuxt)**: One-time warning via `unknownIPWarned` flag when client IP cannot be determined
+
+The validations run on the first request only, then disable themselves to avoid per-request overhead.
 
 ```ts
 // First request:
@@ -491,20 +529,20 @@ Also includes stack trace inspection to detect "rate limiter created inside requ
 
 ---
 
-### 18. express-rate-limit: IETF Draft-8 headers with partition keys
+### 19. ~~express-rate-limit: IETF Draft-8 headers with partition keys~~ ✅ DONE
+
+**Status: Fixed.** Ported the full header format system (`HeadersFormat`, `QuotaUnit`, `identifier`, `quotaUnit`) from Hono/H3 to Express. All three adapters now support: `'legacy'` (default), `'draft-6'`, `'draft-7'`, `'standard'` (IETF draft-08+), and `false` (disable). The old `legacyHeaders`/`standardHeaders` boolean options remain as deprecated aliases for backward compatibility. Tests cover all 5 header format modes in Express.
 
 The latest IETF standard (draft-8) includes:
 - Named quotas: `"100-in-1min"` identifier
 - Partition keys: SHA-256 hash of the client key (privacy-preserving)
 - Stackable: `response.append()` so multiple limiters can add their own headers
 
-Currently @jfungus/ratelimit supports draft-6/7/8 in Hono adapter and legacy+standard in Express. Verify all adapters have consistent support.
-
 ---
 
 ## P0.5 - Verified Bugs (from code review)
 
-### 19. Unstorage increment race condition (non-atomic read-then-write)
+### 19. ~~Unstorage increment race condition (non-atomic read-then-write)~~ ✅ DOCUMENTED
 
 **Problem:** The unstorage `increment()` at `packages/unstorage/src/index.ts:128-154` does a `getItem` then `setItem` as two separate operations. Under concurrent load with any shared store (Redis, database), this produces lost updates.
 
@@ -567,7 +605,9 @@ If multiple clients hit the server without detectable IPs (misconfigured proxy, 
 
 ---
 
-### 22. IPv6 bypass (verified in all three adapters)
+### 22. ~~IPv6 bypass (verified in all three adapters)~~ ✅ DONE
+
+**Status: Fixed.** Added `maskIPv6()` utility to the core package that applies /56 subnet masking to IPv6 addresses (zero dependencies, pure bitwise operations). Integrated into all four adapters (Hono, H3, Express, Nuxt). The `getClientIP()` functions now accept an `ipv6Subnet` parameter (default: 56, `false` to disable). Addresses within the same /56 allocation share a single rate limit bucket, preventing bypass via IPv6 address rotation.
 
 **Problem:** All three `getClientIP` implementations return the raw IP string with zero subnet normalization. Any user with a /56 IPv6 allocation can rotate through ~4.7 sextillion unique addresses, each getting its own fresh rate limit bucket.
 
@@ -582,7 +622,9 @@ If multiple clients hit the server without detectable IPs (misconfigured proxy, 
 
 ---
 
-### 23. Unstorage increment resets TTL on every write (subtle correctness issue)
+### 23. ~~Unstorage increment resets TTL on every write (subtle correctness issue)~~ ✅ DONE
+
+**Status: Fixed.** Split TTL calculation into `getNewEntryTtlSeconds()` (full 2x windowMs + 10% buffer) and `getRemainingTtlSeconds(reset)` (based on actual remaining time + 10% buffer). Existing entries now use the remaining TTL, preventing unnecessarily extending key lifetime in storage. Applied to both `increment()` and `decrement()`.
 
 **Problem:** At `packages/unstorage/src/index.ts:141-143`, every `increment()` call refreshes the storage driver TTL:
 
@@ -604,7 +646,13 @@ For the **previous window key**, this doesn't matter because it stops receiving 
 
 ## P1.5 - Feature Parity
 
-### 24. H3 adapter feature gap (verified)
+### 24. ~~H3 adapter feature gap (verified)~~ ✅ DONE
+
+**Status: Fixed.** Ported the following features from Hono to H3:
+- Header formats: legacy (default), draft-6, draft-7, standard, false (disable)
+- Policy identifier and quota unit for IETF headers
+- Store access in event context (`event.context.rateLimitStore`)
+- Note: `skipSuccessfulRequests`/`skipFailedRequests` not ported — H3 middleware lacks a clean after-response hook. These remain Hono/Express-only features.
 
 **Problem:** The H3 adapter is significantly behind the Hono adapter in features:
 
@@ -636,8 +684,8 @@ For the **previous window key**, this doesn't matter because it stops receiving 
 - P3 items are advanced features that make the library stand out
 - The two-map rotation (#3) and ephemeral cache (#4) could be combined into a single MemoryStore rewrite
 - The points system (#7) requires a store interface change that should be planned carefully for backward compatibility
-- Check-before-write (#1) **requires** atomic sliding window (#6) -- the naive get-then-increment approach has a TOCTOU race that is worse than the current increment-first approach. These must be implemented together.
-- Items #19 and #20 compound each other -- fixing the race condition means fixing it in two places due to the code duplication
+- ~~Check-before-write (#1) **requires** atomic sliding window (#6)~~ ✅ Solved: `checkAndIncrement` method on store interface; MemoryStore implements it atomically. External stores can provide their own implementation (e.g., Lua scripts for Redis).
+- ~~Items #19 and #20 compound each other~~ ✅ Solved: code duplication eliminated (#20), both fixed
 
 ---
 
@@ -646,35 +694,37 @@ For the **previous window key**, this doesn't matter because it stops receiving 
 ### Phase 1: Correctness (P0 + P0.5)
 1. ~~**#2** Fix unstorage + Nuxt stores 2x TTL bug~~ ✅ DONE
 2. ~~**#20** Eliminate Nuxt runtime code duplication (prevents double-fixing)~~ ✅ DONE
-3. **#19** Document unstorage race condition (honesty with users)
+3. ~~**#19** Document unstorage race condition (honesty with users)~~ ✅ DOCUMENTED
 4. ~~**#21** Fix 'unknown' IP fallback with warning~~ ✅ DONE
 
 ### Phase 2: Security (P0.5 → P2)
-5. **#22/#13** IPv6 subnet masking in all adapters (security bypass)
+5. ~~**#22/#14** IPv6 subnet masking in all adapters (security bypass)~~ ✅ DONE
 
 ### Phase 3: Production Hardening (P1)
-6. **#3** Two-Map rotation MemoryStore (performance)
-7. **#4** Ephemeral block cache (attack mitigation)
-8. **#5** Fail-open / insurance limiter (resilience)
-9. **#6 + #1** Atomic sliding window + check-before-write for Redis (requires atomicity for correctness — see TOCTOU warning on #1)
+6. ~~**#3** Two-Map rotation MemoryStore (performance)~~ ✅ DONE
+7. ~~**#4** Ephemeral block cache (attack mitigation)~~ ✅ DONE
+8. ~~**#5** Fail-open / insurance limiter (resilience)~~ ✅ DONE
+9. ~~**#6 + #1** Atomic sliding window + check-before-write~~ ✅ DONE (MemoryStore; external stores can implement `checkAndIncrement`)
 
 ### Phase 4: Feature Parity (P1.5)
-11. **#24** H3 adapter feature gap (header formats, skip options)
+11. ~~**#24** H3 adapter feature gap (header formats, skip options)~~ ✅ DONE
 
 ### Phase 5: Competitive Features (P2)
-12. **#7** Points/weight system
-13. **#8** Dynamic limits per request (framework adapters)
-14. **#9** Timeout with fail-open
-15. **#10** `pending` promise pattern
+12. ~~**#7** Points/weight system~~ ✅ DONE
+13. ~~**#8** Runtime config (`configure()` method)~~ ✅ DONE
+14. ~~**#9** Dynamic limits per request (framework adapters)~~ ✅ DONE
+15. ~~**#10** Timeout with fail-open~~ ✅ DONE
+16. ~~**#11** `pending` promise pattern~~ ✅ DONE
 
 ### Phase 6: Advanced (P3)
-16. **#11** Penalty/reward methods
-17. **#12** Ban escalation
-18. **#14** Whitelist/blacklist
-19. **#15** BurstyRateLimiter composition
-20. **#16** Response enrichment (`reason` field)
-21. **#17** Validation-once-then-disable
-22. **#18** IETF Draft-8 header consistency across adapters
+17. ~~**#12** Penalty/reward methods~~ ✅ DONE
+18. ~~**#13** Ban escalation~~ ✅ DONE
+19. ~~**#15** Whitelist/blacklist~~ ✅ DONE
+20. ~~**#16** BurstyRateLimiter composition~~ ✅ DONE
+21. ~~**#17** Response enrichment (`reason` field)~~ ✅ DONE
+22. ~~**#18** Validation-once-then-disable~~ ✅ DONE
+23. ~~**#19** IETF Draft-8 header consistency across adapters~~ ✅ DONE
+24. ~~**#23** Unstorage TTL refresh optimization~~ ✅ DONE
 
 ---
 

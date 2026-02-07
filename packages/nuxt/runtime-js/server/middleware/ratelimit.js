@@ -3,7 +3,7 @@
  * @type {import('h3').EventHandler}
  */
 
-import { MemoryStore, checkRateLimit } from '@jfungus/ratelimit'
+import { MemoryStore, checkRateLimit, maskIPv6 } from '@jfungus/ratelimit'
 import { createUnstorageStore } from '@jfungus/ratelimit-unstorage'
 import { createError, defineEventHandler, getHeader, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig, useStorage } from '#imports'
@@ -12,13 +12,15 @@ import { useRuntimeConfig, useStorage } from '#imports'
 // This bypasses Nuxt's runtime config schema filtering
 import buildConfig from '#ratelimit-config'
 
-/** @type {Map<string, import('@jfungus/ratelimit').RateLimitStore>} */
+/** @type {Map<string, { store: import('@jfungus/ratelimit').RateLimitStore, storageKey: string, windowMs: number }>} */
 const stores = new Map()
 
 let unknownIPWarned = false
 
 /**
- * Get or create a store for the given storage configuration
+ * Get or create a store for the given storage configuration.
+ * When windowMs changes for a storage backend, the old store is scheduled
+ * for shutdown after its windows expire naturally.
  * @param {Object} cfg - Rate limit config
  * @param {number} windowMs - Window duration for this specific route
  * @returns {import('@jfungus/ratelimit').RateLimitStore}
@@ -27,22 +29,33 @@ function getStore(cfg, windowMs) {
   const storageKey = cfg.storage || 'memory'
   const storeKey = `${storageKey}:${windowMs}`
 
-  if (stores.has(storeKey)) {
-    return stores.get(storeKey)
-  }
+  const cached = stores.get(storeKey)
+  if (cached) return cached.store
 
+  let store
   if (storageKey === 'memory') {
-    const store = new MemoryStore()
+    store = new MemoryStore()
     store.init(windowMs)
-    stores.set(storeKey, store)
-    return store
+  } else {
+    // Use the canonical unstorage adapter instead of inline duplicate
+    const storage = useStorage(storageKey)
+    store = createUnstorageStore({ storage })
+    store.init(windowMs)
   }
 
-  // Use the canonical unstorage adapter instead of inline duplicate
-  const storage = useStorage(storageKey)
-  const store = createUnstorageStore({ storage })
-  store.init(windowMs)
-  stores.set(storeKey, store)
+  // Schedule cleanup of superseded stores for the same storage backend
+  for (const [key, entry] of stores) {
+    if (entry.storageKey === storageKey && entry.windowMs !== windowMs) {
+      setTimeout(() => {
+        if (stores.has(key)) {
+          entry.store.shutdown?.()
+          stores.delete(key)
+        }
+      }, entry.windowMs * 2)
+    }
+  }
+
+  stores.set(storeKey, { store, storageKey, windowMs })
   return store
 }
 
@@ -65,6 +78,9 @@ function generateKey(event, keyGenerator, routePrefix) {
       )
     }
     ip = 'unknown'
+  } else {
+    // Apply IPv6 /56 subnet masking to prevent bypass via address rotation
+    ip = maskIPv6(ip)
   }
 
   let key = ip
@@ -156,8 +172,9 @@ function setRateLimitHeaders(event, info, headerStyle) {
   }
 }
 
-// Cache for parsed routes config
+// Cache for parsed routes config (re-parsed when routesJson changes)
 let parsedRoutes = null
+let lastRoutesJson = null
 
 export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig()
@@ -168,9 +185,9 @@ export default defineEventHandler(async (event) => {
   // (routesJson and headerStyle are often removed during production builds)
   const config = {
     ...runtimeRateLimit,
-    // Use build config for fields that survive in virtual module but may be stripped from runtime config
-    routesJson: buildConfig?.routesJson || runtimeRateLimit?.routesJson || '{}',
-    headerStyle: buildConfig?.headerStyle || runtimeRateLimit?.headerStyle || 'both',
+    // Runtime config takes precedence over build config (allows dynamic changes)
+    routesJson: runtimeRateLimit?.routesJson ?? buildConfig?.routesJson ?? '{}',
+    headerStyle: runtimeRateLimit?.headerStyle ?? buildConfig?.headerStyle ?? 'both',
   }
 
   if (!config) {
@@ -189,8 +206,9 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  // Parse routes from JSON string (cached for performance)
-  if (parsedRoutes === null && config.routesJson) {
+  // Parse routes from JSON string (re-parse when routesJson changes via runtime config)
+  if (config.routesJson !== lastRoutesJson) {
+    lastRoutesJson = config.routesJson
     try {
       parsedRoutes = JSON.parse(config.routesJson)
     } catch {

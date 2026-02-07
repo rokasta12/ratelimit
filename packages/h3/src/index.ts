@@ -12,6 +12,7 @@ import {
   type RateLimitInfo,
   type RateLimitStore,
   checkRateLimit,
+  maskIPv6,
 } from '@jfungus/ratelimit'
 import type { EventHandler, H3Event } from 'h3'
 import { eventHandler, getHeader, getRequestIP, send, setHeader, setResponseStatus } from 'h3'
@@ -25,13 +26,60 @@ export {
   type CheckRateLimitOptions,
   type CheckRateLimitResult,
   type StoreResult,
+  type StoreCheckResult,
   checkRateLimit,
   createRateLimiter,
+  maskIPv6,
 } from '@jfungus/ratelimit'
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Quota unit for IETF standard headers.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/
+ */
+export type QuotaUnit = 'requests' | 'content-bytes' | 'concurrent-requests'
+
+/**
+ * Header format options.
+ *
+ * ## "legacy" (default)
+ * Common X-RateLimit-* headers used by GitHub, Twitter, and most APIs.
+ *
+ * ## "draft-6"
+ * IETF draft-06 format with individual RateLimit-* headers.
+ *
+ * ## "draft-7"
+ * IETF draft-07 format with combined RateLimit header.
+ *
+ * ## "standard"
+ * Current IETF draft-08+ format with structured field values (RFC 9651).
+ *
+ * ## false
+ * Disable all rate limit headers.
+ */
+export type HeadersFormat =
+  | 'legacy'
+  | 'draft-6'
+  | 'draft-7'
+  | 'standard'
+  | false
+
+/**
+ * Store access interface exposed in event context
+ */
+export type RateLimitStoreAccess = {
+  getKey: (
+    key: string,
+  ) =>
+    | Promise<{ count: number; reset: number } | undefined>
+    | { count: number; reset: number }
+    | undefined
+  resetKey: (key: string) => void | Promise<void>
+  resetAll?: () => void | Promise<void>
+}
 
 /**
  * Options for rate limit middleware
@@ -73,6 +121,24 @@ export type RateLimitOptions = {
   handler?: (event: H3Event, info: RateLimitInfo) => void | Promise<void>
 
   /**
+   * HTTP header format to use.
+   * @default 'legacy'
+   */
+  headers?: HeadersFormat
+
+  /**
+   * Policy identifier for IETF headers (draft-6+).
+   * @default 'default'
+   */
+  identifier?: string
+
+  /**
+   * Quota unit for IETF standard headers.
+   * @default 'requests'
+   */
+  quotaUnit?: QuotaUnit
+
+  /**
    * Skip rate limiting for certain requests.
    */
   skip?: (event: H3Event) => boolean | Promise<boolean>
@@ -93,6 +159,26 @@ export type RateLimitOptions = {
    * @default false
    */
   dryRun?: boolean
+}
+
+/**
+ * Options that can be safely changed at runtime via `configure()`.
+ *
+ * Excludes `windowMs`, `algorithm`, and `store` because changing them
+ * would break epoch-aligned keys, misinterpret existing entries, or
+ * abandon all state.
+ */
+export type RateLimitRuntimeOptions = Omit<
+  RateLimitOptions,
+  'windowMs' | 'algorithm' | 'store'
+>
+
+/**
+ * Rate limiter handler with runtime configuration support.
+ */
+export type RateLimiterHandler = EventHandler & {
+  /** Safely update rate limiter options at runtime. Throws if unsafe keys are provided. */
+  configure: (updates: Partial<RateLimitRuntimeOptions>) => void
 }
 
 // ============================================================================
@@ -119,36 +205,91 @@ export function shutdownDefaultStore(): void {
 /**
  * Extract client IP address from H3 event.
  */
-export function getClientIP(event: H3Event): string {
+export function getClientIP(event: H3Event, ipv6Subnet: number | false = 56): string {
   // Try H3's built-in IP detection first
-  const ip = getRequestIP(event, { xForwardedFor: true })
-  if (ip) {
-    return ip
+  let ip: string | undefined = getRequestIP(event, { xForwardedFor: true }) ?? undefined
+
+  if (!ip) ip = getHeader(event, 'cf-connecting-ip')
+  if (!ip) ip = getHeader(event, 'x-real-ip')
+  if (!ip) {
+    const xff = getHeader(event, 'x-forwarded-for')
+    if (xff) ip = xff.split(',')[0].trim()
   }
 
-  // Platform-specific headers
-  const cfIP = getHeader(event, 'cf-connecting-ip')
-  if (cfIP) {
-    return cfIP
+  if (!ip) {
+    if (!unknownIPWarned) {
+      unknownIPWarned = true
+      console.warn(
+        '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
+      )
+    }
+    return 'unknown'
   }
 
-  const xRealIP = getHeader(event, 'x-real-ip')
-  if (xRealIP) {
-    return xRealIP
-  }
+  return maskIPv6(ip, ipv6Subnet)
+}
 
-  const xff = getHeader(event, 'x-forwarded-for')
-  if (xff) {
-    return xff.split(',')[0].trim()
-  }
+// ============================================================================
+// Header Generation
+// ============================================================================
 
-  if (!unknownIPWarned) {
-    unknownIPWarned = true
-    console.warn(
-      '[@jfungus/ratelimit] Could not determine client IP address. All unidentified clients share a single rate limit bucket. Ensure your reverse proxy sets X-Forwarded-For or X-Real-IP headers.',
-    )
+/**
+ * Sanitize identifier for RFC 9651 structured field compliance.
+ */
+function sanitizeIdentifier(id: string): string {
+  if (!id || typeof id !== 'string') return 'default'
+  const sanitized = id.replace(/[^a-zA-Z0-9_\-.:*/]/g, '-')
+  if (!sanitized || !/^[a-zA-Z]/.test(sanitized)) return 'default'
+  return sanitized
+}
+
+/**
+ * Set rate limit response headers based on the configured format.
+ */
+function setRateLimitHeaders(
+  event: H3Event,
+  info: RateLimitInfo,
+  format: HeadersFormat,
+  windowMs: number,
+  identifier: string,
+  quotaUnit: QuotaUnit,
+): void {
+  if (format === false) return
+
+  const windowSeconds = Math.ceil(windowMs / 1000)
+  const resetSeconds = Math.max(0, Math.ceil((info.reset - Date.now()) / 1000))
+  const safeId = sanitizeIdentifier(identifier)
+
+  switch (format) {
+    case 'standard': {
+      let policy = `"${safeId}";q=${info.limit};w=${windowSeconds}`
+      if (quotaUnit !== 'requests') {
+        policy += `;qu="${quotaUnit}"`
+      }
+      setHeader(event, 'RateLimit-Policy', policy)
+      setHeader(event, 'RateLimit', `"${safeId}";r=${info.remaining};t=${resetSeconds}`)
+      break
+    }
+    case 'draft-7':
+      setHeader(event, 'RateLimit-Policy', `${info.limit};w=${windowSeconds}`)
+      setHeader(
+        event,
+        'RateLimit',
+        `limit=${info.limit}, remaining=${info.remaining}, reset=${resetSeconds}`,
+      )
+      break
+    case 'draft-6':
+      setHeader(event, 'RateLimit-Policy', `${info.limit};w=${windowSeconds}`)
+      setHeader(event, 'RateLimit-Limit', String(info.limit))
+      setHeader(event, 'RateLimit-Remaining', String(info.remaining))
+      setHeader(event, 'RateLimit-Reset', String(resetSeconds))
+      break
+    default:
+      setHeader(event, 'X-RateLimit-Limit', String(info.limit))
+      setHeader(event, 'X-RateLimit-Remaining', String(info.remaining))
+      setHeader(event, 'X-RateLimit-Reset', String(Math.ceil(info.reset / 1000)))
+      break
   }
-  return 'unknown'
 }
 
 // ============================================================================
@@ -185,7 +326,7 @@ export function getClientIP(event: H3Event): string {
  * })
  * ```
  */
-export function rateLimiter(options?: RateLimitOptions): EventHandler {
+export function rateLimiter(options?: RateLimitOptions): RateLimiterHandler {
   const opts = {
     limit: 100 as number | ((event: H3Event) => number | Promise<number>),
     windowMs: 60_000,
@@ -195,6 +336,9 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     handler: undefined as
       | ((event: H3Event, info: RateLimitInfo) => void | Promise<void>)
       | undefined,
+    headers: 'legacy' as HeadersFormat,
+    identifier: 'default',
+    quotaUnit: 'requests' as QuotaUnit,
     skip: undefined as ((event: H3Event) => boolean | Promise<boolean>) | undefined,
     onRateLimited: undefined as
       | ((event: H3Event, info: RateLimitInfo) => void | Promise<void>)
@@ -228,7 +372,9 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     return opts.onStoreError === 'allow'
   }
 
-  return eventHandler(async function rateLimiterHandler(event: H3Event) {
+  const unsafeKeys = ['windowMs', 'algorithm', 'store'] as const
+
+  const handler = eventHandler(async function rateLimiterHandler(event: H3Event) {
     // Initialize store
     if (!initPromise && store.init) {
       const result = store.init(opts.windowMs)
@@ -238,6 +384,8 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
       try {
         await initPromise
       } catch (error) {
+        // Reset to allow retry on next request
+        initPromise = null
         const shouldAllow = await handleStoreError(
           error instanceof Error ? error : new Error(String(error)),
           event,
@@ -291,12 +439,17 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     }
 
     // Set headers
-    setHeader(event, 'X-RateLimit-Limit', String(info.limit))
-    setHeader(event, 'X-RateLimit-Remaining', String(info.remaining))
-    setHeader(event, 'X-RateLimit-Reset', String(Math.ceil(info.reset / 1000)))
+    setRateLimitHeaders(event, info, opts.headers, opts.windowMs, opts.identifier, opts.quotaUnit)
 
     // Store info in event context
     event.context.rateLimit = info
+
+    // Expose store access in event context
+    event.context.rateLimitStore = {
+      getKey: store.get?.bind(store) ?? (() => undefined),
+      resetKey: store.resetKey.bind(store),
+      resetAll: store.resetAll?.bind(store),
+    }
 
     // Handle rate limited
     if (!allowed) {
@@ -318,7 +471,26 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
     }
 
     // Continue to next handler (return undefined)
-  })
+  }) as RateLimiterHandler
+
+  handler.configure = (updates: Partial<RateLimitRuntimeOptions>) => {
+    for (const key of unsafeKeys) {
+      if (key in updates) {
+        throw new Error(
+          `[@jfungus/ratelimit-h3] Cannot change '${key}' at runtime. This would break existing rate limit state.`,
+        )
+      }
+    }
+    // Validate limit if provided
+    if ('limit' in updates && typeof updates.limit === 'number' && updates.limit <= 0) {
+      throw new Error(
+        `[@jfungus/ratelimit-h3] limit must be a positive number, got: ${updates.limit}`,
+      )
+    }
+    Object.assign(opts, updates)
+  }
+
+  return handler
 }
 
 /**
@@ -335,6 +507,6 @@ export function rateLimiter(options?: RateLimitOptions): EventHandler {
  * })
  * ```
  */
-export function defineRateLimiter(options?: RateLimitOptions): EventHandler {
+export function defineRateLimiter(options?: RateLimitOptions): RateLimiterHandler {
   return rateLimiter(options)
 }
