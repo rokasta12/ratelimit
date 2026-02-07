@@ -23,12 +23,15 @@
     "clean": "pnpm -r clean && rm -rf node_modules",
     "changeset": "changeset",
     "changeset:version": "changeset version && pnpm lint:fix",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm build && changeset publish",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@changesets/cli": "^2.27.10",
     "@types/node": "^22.13.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
@@ -36,5 +39,9 @@
   "packageManager": "pnpm@9.14.4",
   "engines": {
     "node": ">=18"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": ["biome check --write --no-errors-on-unmatched"],
+    "*.{json,md}": ["biome format --write --no-errors-on-unmatched"]
   }
 }
