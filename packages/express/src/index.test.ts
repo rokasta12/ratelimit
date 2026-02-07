@@ -163,7 +163,7 @@ describe('@jfungus/ratelimit-express', () => {
         const res = await request(app).get('/')
 
         expect(res.headers['ratelimit-policy']).toBe('10;w=60')
-        expect(res.headers['ratelimit']).toMatch(/limit=10, remaining=9, reset=\d+/)
+        expect(res.headers.ratelimit).toMatch(/limit=10, remaining=9, reset=\d+/)
         expect(res.headers['x-ratelimit-limit']).toBeUndefined()
       })
 
@@ -175,7 +175,7 @@ describe('@jfungus/ratelimit-express', () => {
         const res = await request(app).get('/')
 
         expect(res.headers['ratelimit-policy']).toMatch(/"default";q=10;w=60/)
-        expect(res.headers['ratelimit']).toMatch(/"default";r=9;t=\d+/)
+        expect(res.headers.ratelimit).toMatch(/"default";r=9;t=\d+/)
         expect(res.headers['x-ratelimit-limit']).toBeUndefined()
       })
 
@@ -189,7 +189,7 @@ describe('@jfungus/ratelimit-express', () => {
         expect(res.headers['x-ratelimit-limit']).toBeUndefined()
         expect(res.headers['ratelimit-limit']).toBeUndefined()
         expect(res.headers['ratelimit-policy']).toBeUndefined()
-        expect(res.headers['ratelimit']).toBeUndefined()
+        expect(res.headers.ratelimit).toBeUndefined()
       })
     })
 
@@ -224,23 +224,27 @@ describe('@jfungus/ratelimit-express', () => {
 
       it('throws on windowMs change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
-          "Cannot change 'windowMs' at runtime",
-        )
+        expect(() =>
+          limiter.configure({ windowMs: 30_000 } as Parameters<typeof limiter.configure>[0]),
+        ).toThrow("Cannot change 'windowMs' at runtime")
       })
 
       it('throws on algorithm change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
-          "Cannot change 'algorithm' at runtime",
-        )
+        expect(() =>
+          limiter.configure({
+            algorithm: 'fixed-window',
+          } as Parameters<typeof limiter.configure>[0]),
+        ).toThrow("Cannot change 'algorithm' at runtime")
       })
 
       it('throws on store change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
-          "Cannot change 'store' at runtime",
-        )
+        expect(() =>
+          limiter.configure({ store: new MemoryStore() } as Parameters<
+            typeof limiter.configure
+          >[0]),
+        ).toThrow("Cannot change 'store' at runtime")
       })
 
       it('throws on invalid limit value', () => {

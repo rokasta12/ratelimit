@@ -430,7 +430,10 @@ describe('@jfungus/ratelimit core', () => {
     it('whitelisted keys are always allowed (array)', async () => {
       for (let i = 0; i < 20; i++) {
         const result = await checkRateLimit({
-          store, key: 'vip', limit: 1, windowMs: 60_000,
+          store,
+          key: 'vip',
+          limit: 1,
+          windowMs: 60_000,
           whitelist: ['vip'],
         })
         expect(result.allowed).toBe(true)
@@ -440,7 +443,10 @@ describe('@jfungus/ratelimit core', () => {
 
     it('whitelisted keys are always allowed (function)', async () => {
       const result = await checkRateLimit({
-        store, key: 'admin-123', limit: 1, windowMs: 60_000,
+        store,
+        key: 'admin-123',
+        limit: 1,
+        windowMs: 60_000,
         whitelist: (k) => k.startsWith('admin-'),
       })
       expect(result.allowed).toBe(true)
@@ -448,7 +454,10 @@ describe('@jfungus/ratelimit core', () => {
 
     it('blacklisted keys are always rejected (array)', async () => {
       const result = await checkRateLimit({
-        store, key: 'bad-actor', limit: 100, windowMs: 60_000,
+        store,
+        key: 'bad-actor',
+        limit: 100,
+        windowMs: 60_000,
         blacklist: ['bad-actor'],
       })
       expect(result.allowed).toBe(false)
@@ -457,7 +466,10 @@ describe('@jfungus/ratelimit core', () => {
 
     it('blacklisted keys are always rejected (function)', async () => {
       const result = await checkRateLimit({
-        store, key: 'banned-ip', limit: 100, windowMs: 60_000,
+        store,
+        key: 'banned-ip',
+        limit: 100,
+        windowMs: 60_000,
         blacklist: (k) => k.startsWith('banned-'),
       })
       expect(result.allowed).toBe(false)
@@ -465,8 +477,12 @@ describe('@jfungus/ratelimit core', () => {
 
     it('non-listed keys are rate limited normally', async () => {
       const r1 = await checkRateLimit({
-        store, key: 'normal', limit: 2, windowMs: 60_000,
-        whitelist: ['vip'], blacklist: ['banned'],
+        store,
+        key: 'normal',
+        limit: 2,
+        windowMs: 60_000,
+        whitelist: ['vip'],
+        blacklist: ['banned'],
       })
       expect(r1.allowed).toBe(true)
       expect(r1.info.remaining).toBe(1)
@@ -487,48 +503,74 @@ describe('@jfungus/ratelimit core', () => {
 
     it('consumes multiple points per request', async () => {
       const result = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, cost: 5,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        cost: 5,
       })
       expect(result.allowed).toBe(true)
       expect(result.info.remaining).toBe(5)
 
       // Next request with cost 5 uses up remaining
       const r2 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, cost: 5,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        cost: 5,
       })
       expect(r2.allowed).toBe(true)
       expect(r2.info.remaining).toBe(0)
 
       // Next request exceeds limit
       const r3 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, cost: 1,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        cost: 1,
       })
       expect(r3.allowed).toBe(false)
     })
 
     it('defaults cost to 1 (backward compatible)', async () => {
       const r1 = await checkRateLimit({
-        store, key: 'test', limit: 3, windowMs: 60_000,
+        store,
+        key: 'test',
+        limit: 3,
+        windowMs: 60_000,
       })
       expect(r1.info.remaining).toBe(2)
 
       const r2 = await checkRateLimit({
-        store, key: 'test', limit: 3, windowMs: 60_000,
+        store,
+        key: 'test',
+        limit: 3,
+        windowMs: 60_000,
       })
       expect(r2.info.remaining).toBe(1)
     })
 
     it('works with fixed window algorithm', async () => {
       const r1 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000,
-        algorithm: 'fixed-window', cost: 7,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        algorithm: 'fixed-window',
+        cost: 7,
       })
       expect(r1.allowed).toBe(true)
       expect(r1.info.remaining).toBe(3)
 
       const r2 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000,
-        algorithm: 'fixed-window', cost: 4,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        algorithm: 'fixed-window',
+        cost: 4,
       })
       expect(r2.allowed).toBe(false)
     })
@@ -545,9 +587,10 @@ describe('@jfungus/ratelimit core', () => {
   describe('timeout', () => {
     it('allows request through when store times out', async () => {
       const slowStore: RateLimitStore = {
-        increment: () => new Promise((resolve) => {
-          setTimeout(() => resolve({ count: 999, reset: Date.now() + 60_000 }), 5000)
-        }),
+        increment: () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ count: 999, reset: Date.now() + 60_000 }), 5000)
+          }),
         resetKey: () => {},
       }
 
@@ -614,7 +657,11 @@ describe('@jfungus/ratelimit core', () => {
       blockCache.set('test', Date.now() + 60_000)
 
       const result = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, blockCache,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        blockCache,
       })
       expect(result.allowed).toBe(false)
       expect(result.reason).toBe('cacheBlock')
@@ -649,7 +696,11 @@ describe('@jfungus/ratelimit core', () => {
 
       // Should be blocked
       const r1 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, blockCache,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        blockCache,
       })
       expect(r1.allowed).toBe(false)
 
@@ -658,7 +709,11 @@ describe('@jfungus/ratelimit core', () => {
 
       // Should hit the store now (cache expired)
       const r2 = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000, blockCache,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
+        blockCache,
       })
       expect(r2.allowed).toBe(true)
       expect(blockCache.size).toBe(0)
@@ -670,8 +725,12 @@ describe('@jfungus/ratelimit core', () => {
       vi.useFakeTimers()
       const blockCache = new Map<string, number>()
       const opts = {
-        store, key: 'test', limit: 1, windowMs: 60_000,
-        blockCache, blockDuration: 3600_000, // 1 hour ban
+        store,
+        key: 'test',
+        limit: 1,
+        windowMs: 60_000,
+        blockCache,
+        blockDuration: 3600_000, // 1 hour ban
       }
 
       // First request allowed
@@ -695,12 +754,18 @@ describe('@jfungus/ratelimit core', () => {
 
     it('works without blockCache (default behavior)', async () => {
       const r1 = await checkRateLimit({
-        store, key: 'test', limit: 1, windowMs: 60_000,
+        store,
+        key: 'test',
+        limit: 1,
+        windowMs: 60_000,
       })
       expect(r1.allowed).toBe(true)
 
       const r2 = await checkRateLimit({
-        store, key: 'test', limit: 1, windowMs: 60_000,
+        store,
+        key: 'test',
+        limit: 1,
+        windowMs: 60_000,
       })
       expect(r2.allowed).toBe(false)
     })
@@ -712,7 +777,10 @@ describe('@jfungus/ratelimit core', () => {
       store.init(60_000)
 
       const result = await checkRateLimit({
-        store, key: 'test', limit: 10, windowMs: 60_000,
+        store,
+        key: 'test',
+        limit: 10,
+        windowMs: 60_000,
       })
 
       expect(result.pending).toBeInstanceOf(Promise)
@@ -738,7 +806,9 @@ describe('@jfungus/ratelimit core', () => {
   describe('fallbackStore', () => {
     it('uses fallback when primary store throws', async () => {
       const failingStore: RateLimitStore = {
-        increment: () => { throw new Error('Redis connection refused') },
+        increment: () => {
+          throw new Error('Redis connection refused')
+        },
         resetKey: () => {},
       }
       const fallbackStore = new MemoryStore()
@@ -760,15 +830,29 @@ describe('@jfungus/ratelimit core', () => {
 
     it('fallback store enforces limits', async () => {
       const failingStore: RateLimitStore = {
-        increment: () => { throw new Error('Redis connection refused') },
+        increment: () => {
+          throw new Error('Redis connection refused')
+        },
         resetKey: () => {},
       }
       const fallbackStore = new MemoryStore()
       fallbackStore.init(60_000)
 
       // Exhaust the limit
-      await checkRateLimit({ store: failingStore, fallbackStore, key: 'test', limit: 1, windowMs: 60_000 })
-      const result = await checkRateLimit({ store: failingStore, fallbackStore, key: 'test', limit: 1, windowMs: 60_000 })
+      await checkRateLimit({
+        store: failingStore,
+        fallbackStore,
+        key: 'test',
+        limit: 1,
+        windowMs: 60_000,
+      })
+      const result = await checkRateLimit({
+        store: failingStore,
+        fallbackStore,
+        key: 'test',
+        limit: 1,
+        windowMs: 60_000,
+      })
 
       expect(result.allowed).toBe(false)
       expect(result.reason).toBe('fallback')
@@ -777,16 +861,20 @@ describe('@jfungus/ratelimit core', () => {
 
     it('throws error when primary fails and no fallback provided', async () => {
       const failingStore: RateLimitStore = {
-        increment: () => { throw new Error('Redis connection refused') },
+        increment: () => {
+          throw new Error('Redis connection refused')
+        },
         resetKey: () => {},
       }
 
-      await expect(checkRateLimit({
-        store: failingStore,
-        key: 'test',
-        limit: 10,
-        windowMs: 60_000,
-      })).rejects.toThrow('Redis connection refused')
+      await expect(
+        checkRateLimit({
+          store: failingStore,
+          key: 'test',
+          limit: 10,
+          windowMs: 60_000,
+        }),
+      ).rejects.toThrow('Redis connection refused')
     })
 
     it('uses primary store when it works (fallback not touched)', async () => {
@@ -809,7 +897,7 @@ describe('@jfungus/ratelimit core', () => {
       expect(result.info.remaining).toBe(9)
 
       // Fallback should still have full limit (untouched)
-      expect(fallbackStore.get('test:' + Math.floor(Date.now() / 60_000) * 60_000)).toBeUndefined()
+      expect(fallbackStore.get(`test:${Math.floor(Date.now() / 60_000) * 60_000}`)).toBeUndefined()
 
       primaryStore.shutdown()
       fallbackStore.shutdown()
@@ -944,12 +1032,24 @@ describe('@jfungus/ratelimit core', () => {
     it('rejected requests do not inflate the counter (fixed window)', async () => {
       // Exhaust the limit
       for (let i = 0; i < 3; i++) {
-        await checkRateLimit({ store, key: 'test', limit: 3, windowMs: 60_000, algorithm: 'fixed-window' })
+        await checkRateLimit({
+          store,
+          key: 'test',
+          limit: 3,
+          windowMs: 60_000,
+          algorithm: 'fixed-window',
+        })
       }
 
       // Make 5 rejected requests
       for (let i = 0; i < 5; i++) {
-        const r = await checkRateLimit({ store, key: 'test', limit: 3, windowMs: 60_000, algorithm: 'fixed-window' })
+        const r = await checkRateLimit({
+          store,
+          key: 'test',
+          limit: 3,
+          windowMs: 60_000,
+          algorithm: 'fixed-window',
+        })
         expect(r.allowed).toBe(false)
       }
 
@@ -984,7 +1084,12 @@ describe('@jfungus/ratelimit core', () => {
         // No checkAndIncrement — should use fallback path
       }
 
-      const r1 = await checkRateLimit({ store: basicStore, key: 'test', limit: 2, windowMs: 60_000 })
+      const r1 = await checkRateLimit({
+        store: basicStore,
+        key: 'test',
+        limit: 2,
+        windowMs: 60_000,
+      })
       expect(r1.allowed).toBe(true)
     })
   })

@@ -201,10 +201,7 @@ export type RateLimitOptions = {
  * would break epoch-aligned keys, misinterpret existing entries, or
  * abandon all state.
  */
-export type RateLimitRuntimeOptions = Omit<
-  RateLimitOptions,
-  'windowMs' | 'algorithm' | 'store'
->
+export type RateLimitRuntimeOptions = Omit<RateLimitOptions, 'windowMs' | 'algorithm' | 'store'>
 
 /**
  * Rate limiter middleware with runtime configuration support.

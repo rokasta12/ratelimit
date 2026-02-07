@@ -574,7 +574,10 @@ export const rateLimiter = <E extends Env = Env>(
 
   const unsafeKeys = ['windowMs', 'algorithm', 'store'] as const
 
-  const middleware = async function rateLimiterMiddleware(c: Context<E>, next: () => Promise<void>) {
+  const middleware = async function rateLimiterMiddleware(
+    c: Context<E>,
+    next: () => Promise<void>,
+  ) {
     // Initialize store on first request (with proper locking)
     if (!initPromise && store.init) {
       const result = store.init(opts.windowMs)

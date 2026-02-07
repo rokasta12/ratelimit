@@ -768,7 +768,20 @@ async function checkFixedWindow(
 export async function checkRateLimit(
   options: CheckRateLimitOptions,
 ): Promise<CheckRateLimitResult> {
-  const { store, key, limit, windowMs, algorithm = 'sliding-window', cost = 1, whitelist, blacklist, blockDuration, blockCache, timeout, fallbackStore } = options
+  const {
+    store,
+    key,
+    limit,
+    windowMs,
+    algorithm = 'sliding-window',
+    cost = 1,
+    whitelist,
+    blacklist,
+    blockDuration,
+    blockCache,
+    timeout,
+    fallbackStore,
+  } = options
 
   // Validate
   if (limit <= 0) {
@@ -780,9 +793,7 @@ export async function checkRateLimit(
 
   // Whitelist: skip rate limiting entirely
   if (whitelist) {
-    const isWhitelisted = typeof whitelist === 'function'
-      ? whitelist(key)
-      : whitelist.includes(key)
+    const isWhitelisted = typeof whitelist === 'function' ? whitelist(key) : whitelist.includes(key)
     if (isWhitelisted) {
       return {
         allowed: true,
@@ -795,9 +806,7 @@ export async function checkRateLimit(
 
   // Blacklist: reject immediately
   if (blacklist) {
-    const isBlacklisted = typeof blacklist === 'function'
-      ? blacklist(key)
-      : blacklist.includes(key)
+    const isBlacklisted = typeof blacklist === 'function' ? blacklist(key) : blacklist.includes(key)
     if (isBlacklisted) {
       return {
         allowed: false,
@@ -869,9 +878,7 @@ export async function checkRateLimit(
   // Cache blocked keys for future short-circuiting
   if (blockCache && !result.allowed) {
     // Ban escalation: use blockDuration if set, otherwise use the window reset
-    const banExpiry = blockDuration
-      ? Date.now() + blockDuration
-      : result.info.reset
+    const banExpiry = blockDuration ? Date.now() + blockDuration : result.info.reset
     blockCache.set(key, banExpiry)
   }
 
@@ -932,9 +939,7 @@ export type RateLimiterInstance = {
   reward: (key: string, points?: number) => Promise<void>
 }
 
-export function createRateLimiter(
-  config: Omit<CheckRateLimitOptions, 'key'>,
-): RateLimiterInstance {
+export function createRateLimiter(config: Omit<CheckRateLimitOptions, 'key'>): RateLimiterInstance {
   const instance: RateLimiterInstance = {
     check: (key: string, cost?: number) =>
       checkRateLimit({ ...config, key, ...(cost !== undefined ? { cost } : {}) }),
@@ -1136,8 +1141,8 @@ function parseIPv6(ip: string): number[] | null {
     const parts = ipv6Part.split('::')
     if (parts.length > 2) return null // Multiple :: is invalid
 
-    const left = parts[0] ? parts[0].split(':').map((h) => parseInt(h, 16)) : []
-    const right = parts[1] ? parts[1].split(':').map((h) => parseInt(h, 16)) : []
+    const left = parts[0] ? parts[0].split(':').map((h) => Number.parseInt(h, 16)) : []
+    const right = parts[1] ? parts[1].split(':').map((h) => Number.parseInt(h, 16)) : []
     const fillCount = targetGroups - left.length - right.length
 
     if (fillCount < 0) return null
@@ -1145,7 +1150,7 @@ function parseIPv6(ip: string): number[] | null {
     return v4Groups ? [...groups, ...v4Groups] : groups
   }
 
-  const groups = ipv6Part.split(':').map((h) => parseInt(h, 16))
+  const groups = ipv6Part.split(':').map((h) => Number.parseInt(h, 16))
   if (groups.length !== targetGroups) return null
   return v4Groups ? [...groups, ...v4Groups] : groups
 }
@@ -1202,5 +1207,5 @@ export function maskIPv6(ip: string, prefixLength: number | false = 56): string 
     }
   }
 
-  return formatIPv6(masked) + '/' + prefixLength
+  return `${formatIPv6(masked)}/${prefixLength}`
 }

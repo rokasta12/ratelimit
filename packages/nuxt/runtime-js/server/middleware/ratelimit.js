@@ -67,8 +67,7 @@ function getStore(cfg, windowMs) {
  * @returns {string}
  */
 function generateKey(event, keyGenerator, routePrefix) {
-  let ip =
-    getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() || getRequestIP(event)
+  let ip = getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() || getRequestIP(event)
 
   if (!ip) {
     if (!unknownIPWarned) {

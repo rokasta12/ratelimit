@@ -460,23 +460,25 @@ describe('@jfungus/ratelimit-hono', () => {
 
     it('throws on windowMs change', () => {
       const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-      expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
-        "Cannot change 'windowMs' at runtime",
-      )
+      expect(() =>
+        limiter.configure({ windowMs: 30_000 } as Parameters<typeof limiter.configure>[0]),
+      ).toThrow("Cannot change 'windowMs' at runtime")
     })
 
     it('throws on algorithm change', () => {
       const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-      expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
-        "Cannot change 'algorithm' at runtime",
-      )
+      expect(() =>
+        limiter.configure({
+          algorithm: 'fixed-window',
+        } as Parameters<typeof limiter.configure>[0]),
+      ).toThrow("Cannot change 'algorithm' at runtime")
     })
 
     it('throws on store change', () => {
       const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-      expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
-        "Cannot change 'store' at runtime",
-      )
+      expect(() =>
+        limiter.configure({ store: new MemoryStore() } as Parameters<typeof limiter.configure>[0]),
+      ).toThrow("Cannot change 'store' at runtime")
     })
 
     it('throws on invalid limit value', () => {

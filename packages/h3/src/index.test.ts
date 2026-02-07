@@ -197,10 +197,14 @@ describe('@jfungus/ratelimit-h3', () => {
 
       it('sets draft-6 headers', async () => {
         const app = createApp()
-        app.use(rateLimiter({
-          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
-          headers: 'draft-6',
-        }))
+        app.use(
+          rateLimiter({
+            limit: 10,
+            windowMs: 60_000,
+            keyGenerator: testKeyGenerator,
+            headers: 'draft-6',
+          }),
+        )
         app.use(eventHandler(() => 'OK'))
 
         const res = await makeRequest(app)
@@ -211,10 +215,14 @@ describe('@jfungus/ratelimit-h3', () => {
 
       it('sets draft-7 headers', async () => {
         const app = createApp()
-        app.use(rateLimiter({
-          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
-          headers: 'draft-7',
-        }))
+        app.use(
+          rateLimiter({
+            limit: 10,
+            windowMs: 60_000,
+            keyGenerator: testKeyGenerator,
+            headers: 'draft-7',
+          }),
+        )
         app.use(eventHandler(() => 'OK'))
 
         const res = await makeRequest(app)
@@ -224,10 +232,15 @@ describe('@jfungus/ratelimit-h3', () => {
 
       it('sets standard (IETF) headers', async () => {
         const app = createApp()
-        app.use(rateLimiter({
-          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
-          headers: 'standard', identifier: 'api',
-        }))
+        app.use(
+          rateLimiter({
+            limit: 10,
+            windowMs: 60_000,
+            keyGenerator: testKeyGenerator,
+            headers: 'standard',
+            identifier: 'api',
+          }),
+        )
         app.use(eventHandler(() => 'OK'))
 
         const res = await makeRequest(app)
@@ -237,10 +250,14 @@ describe('@jfungus/ratelimit-h3', () => {
 
       it('disables headers when false', async () => {
         const app = createApp()
-        app.use(rateLimiter({
-          limit: 10, windowMs: 60_000, keyGenerator: testKeyGenerator,
-          headers: false,
-        }))
+        app.use(
+          rateLimiter({
+            limit: 10,
+            windowMs: 60_000,
+            keyGenerator: testKeyGenerator,
+            headers: false,
+          }),
+        )
         app.use(eventHandler(() => 'OK'))
 
         const res = await makeRequest(app)
@@ -272,23 +289,27 @@ describe('@jfungus/ratelimit-h3', () => {
 
       it('throws on windowMs change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ windowMs: 30_000 })).toThrow(
-          "Cannot change 'windowMs' at runtime",
-        )
+        expect(() =>
+          limiter.configure({ windowMs: 30_000 } as Parameters<typeof limiter.configure>[0]),
+        ).toThrow("Cannot change 'windowMs' at runtime")
       })
 
       it('throws on algorithm change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ algorithm: 'fixed-window' })).toThrow(
-          "Cannot change 'algorithm' at runtime",
-        )
+        expect(() =>
+          limiter.configure({
+            algorithm: 'fixed-window',
+          } as Parameters<typeof limiter.configure>[0]),
+        ).toThrow("Cannot change 'algorithm' at runtime")
       })
 
       it('throws on store change', () => {
         const limiter = rateLimiter({ limit: 10, windowMs: 60_000 })
-        expect(() => (limiter as any).configure({ store: new MemoryStore() })).toThrow(
-          "Cannot change 'store' at runtime",
-        )
+        expect(() =>
+          limiter.configure({ store: new MemoryStore() } as Parameters<
+            typeof limiter.configure
+          >[0]),
+        ).toThrow("Cannot change 'store' at runtime")
       })
 
       it('throws on invalid limit value', () => {

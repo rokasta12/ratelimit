@@ -60,12 +60,7 @@ export type QuotaUnit = 'requests' | 'content-bytes' | 'concurrent-requests'
  * ## false
  * Disable all rate limit headers.
  */
-export type HeadersFormat =
-  | 'legacy'
-  | 'draft-6'
-  | 'draft-7'
-  | 'standard'
-  | false
+export type HeadersFormat = 'legacy' | 'draft-6' | 'draft-7' | 'standard' | false
 
 /**
  * Store access interface exposed in event context
@@ -168,10 +163,7 @@ export type RateLimitOptions = {
  * would break epoch-aligned keys, misinterpret existing entries, or
  * abandon all state.
  */
-export type RateLimitRuntimeOptions = Omit<
-  RateLimitOptions,
-  'windowMs' | 'algorithm' | 'store'
->
+export type RateLimitRuntimeOptions = Omit<RateLimitOptions, 'windowMs' | 'algorithm' | 'store'>
 
 /**
  * Rate limiter handler with runtime configuration support.
